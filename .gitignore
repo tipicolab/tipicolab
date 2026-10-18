@@ -1,0 +1,22 @@
+# Dati personali: non vanno MAI su GitHub
+config.json
+*_aggiunti.json
+openrouter_catalogo.json
+modelli_aggiunti.json
+template-canvas/
+Progetti/
+lingua.txt
+.rete.json
+.istanza.json
+
+# Costruzione dell'app e file di sistema
+_build-app/
+build/
+dist/
+build_risorse/origine.txt
+backup-*/
+__pycache__/
+*.pyc
+*.log
+.DS_Store
+AI Dashboard.html

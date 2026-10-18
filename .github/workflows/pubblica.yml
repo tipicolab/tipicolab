@@ -1,0 +1,65 @@
+# Quando si pubblica una versione (tag "v1.2.3"), GitHub costruisce Fra Tak Studio.app su un Mac
+# e la allega alla pagina Releases. Le app già installate la trovano da sole e propongono l'aggiornamento.
+name: Pubblica una versione
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  app:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Controlla che il tag e il file VERSIONE coincidano
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          V="$(tr -d '[:space:]' < VERSIONE)"
+          [ "v$V" = "${GITHUB_REF_NAME}" ] || { echo "Il tag è ${GITHUB_REF_NAME} ma VERSIONE dice $V"; exit 1; }
+
+      - name: Python di python.org (universale, per Mac Intel e Apple)
+        run: |
+          curl -sSfL -o py.pkg https://www.python.org/ftp/python/3.13.7/python-3.13.7-macos11.pkg
+          sudo installer -pkg py.pkg -target /
+          /Library/Frameworks/Python.framework/Versions/3.13/bin/python3 --version
+
+      - name: Costruisce l'app
+        env:
+          PY: /Library/Frameworks/Python.framework/Versions/3.13/bin/python3
+          SOLO_BUILD: "1"
+        run: bash build_app.sh
+
+      - name: Controlli
+        run: |
+          APP="_build-app/dist/Fra Tak Studio.app"
+          lipo -archs "$APP/Contents/MacOS/Fra Tak Studio"
+          plutil -p "$APP/Contents/Info.plist" | grep ShortVersion
+          for f in index.html canvas.js canvas.css server.py openrouter.py aggiornamenti.py VERSIONE models.json; do
+            test -f "$APP/Contents/Resources/$f" || { echo "manca $f"; exit 1; }
+          done
+          # nessuna chiave o dato personale dentro l'app
+          ! find "$APP" -name config.json | grep -q . || { echo "config.json dentro l'app!"; exit 1; }
+          ! grep -rIl "sk-or-v1-" "$APP/Contents/Resources" | grep -q . || { echo "una chiave dentro l'app!"; exit 1; }
+          # il server parte e risponde (senza chiave, senza generare nulla)
+          export FRATAK_DATI="$RUNNER_TEMP/dati" STUDIO_NO_BROWSER=1
+          mkdir -p "$FRATAK_DATI"
+          cd "$APP/Contents/Resources"
+          /Library/Frameworks/Python.framework/Versions/3.13/bin/python3 server.py & PID=$!
+          for i in $(seq 1 30); do curl -sf http://127.0.0.1:8765/api/stato >/dev/null && break; sleep 1; done
+          curl -sf http://127.0.0.1:8765/ | grep -q "Fra Tak Studio"
+          curl -sf http://127.0.0.1:8765/api/aggiornamento
+          kill $PID
+
+      - name: Pubblica nella pagina Releases
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          NOTE="$(sed -n '/^## '"${GITHUB_REF_NAME#v}"'$/,/^## /p' NOVITA.md | sed '1d;/^## /d')"
+          gh release create "$GITHUB_REF_NAME" "_build-app/Fra-Tak-Studio.zip" \
+            --title "Fra Tak Studio ${GITHUB_REF_NAME#v}" --notes "${NOTE:-Aggiornamento di Fra Tak Studio.}"

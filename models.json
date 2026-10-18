@@ -1,0 +1,62 @@
+{
+  "_nota": "Prezzi in dollari presi dalle pagine fal.ai (ottobre 2026). Se fal cambia i prezzi, aggiornali qui: servono solo per la stima.",
+  "modelli": [
+    {
+      "id": "nano-banana-pro",
+      "nome": "Nano Banana Pro · da testo",
+      "tipo": "immagine",
+      "endpoint": "fal-ai/nano-banana-pro",
+      "reference": null,
+      "parametri": [
+        {"nome": "aspect_ratio", "etichetta": "Formato", "tipo": "scelta", "opzioni": ["1:1", "4:5", "3:4", "2:3", "9:16", "16:9", "3:2", "4:3", "21:9"], "default": "4:5"},
+        {"nome": "resolution", "etichetta": "Risoluzione", "tipo": "scelta", "opzioni": ["1K", "2K", "4K"], "default": "2K"},
+        {"nome": "num_images", "etichetta": "Quante immagini", "tipo": "scelta", "opzioni": [1, 2, 3, 4], "default": 1},
+        {"nome": "seed", "etichetta": "Seed (opzionale)", "tipo": "numero", "default": null}
+      ],
+      "prezzo": {"per": "immagine", "per_risoluzione": {"1K": 0.15, "2K": 0.15, "4K": 0.30}}
+    },
+    {
+      "id": "nano-banana-pro-edit",
+      "nome": "Nano Banana Pro · con reference",
+      "tipo": "immagine",
+      "endpoint": "fal-ai/nano-banana-pro/edit",
+      "reference": {"campo": "image_urls", "multiple": true, "obbligatoria": true, "etichetta": "Reference (outfit, location, luce…)"},
+      "parametri": [
+        {"nome": "aspect_ratio", "etichetta": "Formato", "tipo": "scelta", "opzioni": ["auto", "1:1", "4:5", "3:4", "2:3", "9:16", "16:9", "3:2", "4:3", "21:9"], "default": "4:5"},
+        {"nome": "resolution", "etichetta": "Risoluzione", "tipo": "scelta", "opzioni": ["1K", "2K", "4K"], "default": "2K"},
+        {"nome": "num_images", "etichetta": "Quante immagini", "tipo": "scelta", "opzioni": [1, 2, 3, 4], "default": 1},
+        {"nome": "seed", "etichetta": "Seed (opzionale)", "tipo": "numero", "default": null}
+      ],
+      "prezzo": {"per": "immagine", "per_risoluzione": {"1K": 0.15, "2K": 0.15, "4K": 0.30}}
+    },
+    {
+      "id": "kling-3-std-i2v",
+      "nome": "Kling 3 Standard · da immagine",
+      "tipo": "video",
+      "endpoint": "fal-ai/kling-video/v3/standard/image-to-video",
+      "reference": {"campo": "start_image_url", "multiple": false, "obbligatoria": true, "etichetta": "Primo frame"},
+      "reference_fine": {"campo": "end_image_url", "etichetta": "Ultimo frame (opzionale)"},
+      "parametri": [
+        {"nome": "duration", "etichetta": "Durata (s)", "tipo": "scelta", "opzioni": ["3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], "default": "5"},
+        {"nome": "generate_audio", "etichetta": "Audio", "tipo": "sino", "default": false},
+        {"nome": "negative_prompt", "etichetta": "Da evitare", "tipo": "testo", "default": "blur, distort, and low quality"}
+      ],
+      "prezzo": {"per": "secondo", "per_audio": {"false": 0.084, "true": 0.126}}
+    },
+    {
+      "id": "seedance-2-i2v",
+      "nome": "Seedance 2.0 · da immagine",
+      "tipo": "video",
+      "endpoint": "bytedance/seedance-2.0/image-to-video",
+      "reference": {"campo": "image_url", "multiple": false, "obbligatoria": true, "etichetta": "Primo frame"},
+      "reference_fine": {"campo": "end_image_url", "etichetta": "Ultimo frame (opzionale)"},
+      "parametri": [
+        {"nome": "duration", "etichetta": "Durata (s)", "tipo": "scelta", "opzioni": ["4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], "default": "5"},
+        {"nome": "resolution", "etichetta": "Risoluzione", "tipo": "scelta", "opzioni": ["480p", "720p", "1080p"], "default": "720p"},
+        {"nome": "aspect_ratio", "etichetta": "Formato", "tipo": "scelta", "opzioni": ["auto", "16:9", "9:16", "1:1", "4:3", "3:4", "21:9"], "default": "auto"},
+        {"nome": "generate_audio", "etichetta": "Audio", "tipo": "sino", "default": false}
+      ],
+      "prezzo": {"per": "secondo", "per_risoluzione": {"480p": 0.135, "720p": 0.3034, "1080p": 0.682}}
+    }
+  ]
+}

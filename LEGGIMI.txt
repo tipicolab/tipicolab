@@ -1,0 +1,65 @@
+FRA TAK STUDIO — generazione immagini e video a consumo (OpenRouter)
+
+AVVIO
+- App: apri "Fra Tak Studio" da Applicazioni, Launchpad o dal Dock.
+  ⌘W chiude la finestra (l'app resta nella barra dei menu), ⌘Q esce del tutto.
+  Dall'icona "F" nella barra dei menu: apri l'app, la cartella dei progetti,
+  config.json, riavvia il server, esci.
+- Riserva: doppio clic su "Avvia Fra Tak Studio.command" (apre il browser).
+
+I TUOI DATI
+Chiave, modelli aggiunti, template e catalogo stanno in
+  ~/Library/Application Support/Fra Tak Studio/
+(li usano sia l'app sia "Avvia Fra Tak Studio.command"). Per cambiare la chiave:
+icona F nella barra dei menu → "Apri config.json", incolla la nuova (lascia le
+virgolette), salva e scegli "Riavvia il server".
+Errori dell'app: ~/Library/Logs/Fra Tak Studio.log
+
+AGGIORNAMENTI
+All'avvio l'app controlla su GitHub se c'è una versione nuova e propone
+"Aggiorna e riavvia": scarica, sostituisce l'app in Applicazioni e si riapre.
+Chiave e progetti restano come sono. L'app deve stare nella cartella Applicazioni.
+
+RICREARE L'APP DOPO UNA MODIFICA
+1. Doppio clic su "Crea app Fra Tak Studio.command".
+2. Aspetta "Premi un tasto per chiudere": l'app in Applicazioni è aggiornata
+   (la vecchia viene chiusa e sostituita, i tuoi dati non si toccano).
+La cartella _build-app contiene solo file per la costruzione: si può cancellare,
+verrà ricreata (la prima volta dopo ci vuole qualche minuto in più).
+
+USO
+- Crea un progetto, scegli il modello, carica le reference, scrivi il prompt,
+  controlla il costo stimato e premi Genera.
+- "+ Modelli": cerca altri modelli nel catalogo e aggiungili al menu.
+- Dopo ogni generazione viene salvato il COSTO REALE.
+- Le immagini generate restano dentro l'app (cartella privata:
+  ~/Library/Application Support/Fra Tak Studio/Progetti/<progetto>/, con accanto
+  un .json con prompt, parametri e costo, e spese.csv con lo storico spese).
+- Per salvarne una dove vuoi: icona "Scarica" sull'immagine → si apre la finestra
+  del Mac e scegli cartella e nome.
+- Con "Avvia Fra Tak Studio.command" si chiude chiudendo la finestra del Terminale.
+
+TAG DELLE REFERENCE
+- Ogni reference caricata riceve un tag: @img1, @img2, @img3…
+- Nel prompt scrivi @ e scegli la reference dal menu (frecce + Invio),
+  oppure clicca la miniatura per inserire il suo tag.
+- Puoi rinominare un tag scrivendo sotto la miniatura (es. @giacca, @volto):
+  il prompt si aggiorna da solo.
+- Esempio: "La modella di @volto indossa la giacca di @giacca, luce come @set"
+- Al modello arriva la versione tradotta ("image 1", "image 2 (giacca)"…)
+  con una legenda che spiega quale immagine è quale.
+- Un tag in rosso vuol dire che non esiste una reference con quel nome.
+
+NOTE
+- La chiave resta solo in config.json su questo Mac: non condividere quel file.
+- Se OpenRouter risponde 402, il credito (o il limite della chiave) è finito.
+- Per l'upscale dei video, il video viene caricato per 1 ora su un hosting
+  temporaneo (OpenRouter vuole un link): evitalo con video privati.
+
+SE MACOS NON APRE L'APP O UN FILE .command
+Clic destro sul file (o sull'app in Applicazioni) → Apri → Apri. Basta la prima volta.
+In alternativa: Impostazioni di Sistema → Privacy e sicurezza → in fondo "Apri comunque".
+
+SE MACOS NON APRE "Avvia Fra Tak Studio.command" NEMMENO COSÌ
+Apri il Terminale, scrivi  cd  + spazio, trascina dentro la cartella AI Dashboard, Invio, poi:
+  xattr -dr com.apple.quarantine . && chmod +x "Avvia Fra Tak Studio.command" && python3 server.py

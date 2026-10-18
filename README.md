@@ -22,5 +22,5 @@ scarica la nuova versione, sostituisce quella in Applicazioni e si riapre. Chiav
 ## Pubblicare una versione nuova (per chi sviluppa)
 
 1. Aumenta il numero in `VERSIONE` (es. `1.0.1`) e aggiungi il paragrafo `## 1.0.1` in `NOVITA.md`.
-2. Fai il commit e crea il tag con lo stesso numero: `git tag v1.0.1 && git push --tags`.
-3. GitHub costruisce l'app (circa 10 minuti, vedi la scheda *Actions*) e la pubblica in *Releases*.
+2. Fai il commit e il push su `main`.
+3. Appena cambia `VERSIONE`, GitHub costruisce l'app (circa 10 minuti, vedi la scheda *Actions*) e la pubblica in *Releases*.

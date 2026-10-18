@@ -1,10 +1,11 @@
-# Quando si pubblica una versione (tag "v1.2.3"), GitHub costruisce Fra Tak Studio.app su un Mac
-# e la allega alla pagina Releases. Le app già installate la trovano da sole e propongono l'aggiornamento.
+# Quando cambia il numero nel file VERSIONE, GitHub costruisce Fra Tak Studio.app su un Mac e la pubblica
+# nella pagina Releases (con il tag v<numero>). Le app già installate la trovano e propongono l'aggiornamento.
 name: Pubblica una versione
 
 on:
   push:
-    tags: ["v*"]
+    branches: [main]
+    paths: [VERSIONE]
   workflow_dispatch:
 
 permissions:
@@ -16,11 +17,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Controlla che il tag e il file VERSIONE coincidano
-        if: startsWith(github.ref, 'refs/tags/')
+      - name: Legge il numero di versione
+        id: v
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           V="$(tr -d '[:space:]' < VERSIONE)"
-          [ "v$V" = "${GITHUB_REF_NAME}" ] || { echo "Il tag è ${GITHUB_REF_NAME} ma VERSIONE dice $V"; exit 1; }
+          echo "versione=$V" >> "$GITHUB_OUTPUT"
+          if gh release view "v$V" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "La versione $V è già pubblicata: costruisco solo per controllo."
+            echo "nuova=no" >> "$GITHUB_OUTPUT"
+          else
+            echo "nuova=si" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Python di python.org (universale, per Mac Intel e Apple)
         run: |
@@ -56,10 +65,11 @@ jobs:
           kill $PID
 
       - name: Pubblica nella pagina Releases
-        if: startsWith(github.ref, 'refs/tags/')
+        if: steps.v.outputs.nuova == 'si'
         env:
           GH_TOKEN: ${{ github.token }}
+          V: ${{ steps.v.outputs.versione }}
         run: |
-          NOTE="$(sed -n '/^## '"${GITHUB_REF_NAME#v}"'$/,/^## /p' NOVITA.md | sed '1d;/^## /d')"
-          gh release create "$GITHUB_REF_NAME" "_build-app/Fra-Tak-Studio.zip" \
-            --title "Fra Tak Studio ${GITHUB_REF_NAME#v}" --notes "${NOTE:-Aggiornamento di Fra Tak Studio.}"
+          NOTE="$(sed -n '/^## '"$V"'$/,/^## /p' NOVITA.md | sed '1d;/^## /d')"
+          gh release create "v$V" "_build-app/Fra-Tak-Studio.zip" --target "$GITHUB_SHA" \
+            --title "Fra Tak Studio $V" --notes "${NOTE:-Aggiornamento di Fra Tak Studio.}"

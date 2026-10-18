@@ -1,8 +1,8 @@
-"""Fra Tak Studio per macOS: finestra nativa (pywebview/WebKit) + server locale nello stesso processo.
+"""Tipico Lab per macOS: finestra nativa (pywebview/WebKit) + server locale nello stesso processo.
 
-- I dati dell'utente stanno in ~/Library/Application Support/Fra Tak Studio (copiati dalla cartella
+- I dati dell'utente stanno in ~/Library/Application Support/Tipico Lab (copiati dalla cartella
   del programma al primo avvio). I progetti restano dove indica config.json.
-- Errori in ~/Library/Logs/Fra Tak Studio.log; se il server non parte compare un avviso.
+- Errori in ~/Library/Logs/Tipico Lab.log; se il server non parte compare un avviso.
 - Chiudere la finestra (⌘W) la nasconde; ⌘Q o "Esci" chiude tutto e libera la porta.
 """
 import fcntl
@@ -19,12 +19,13 @@ import traceback
 import urllib.request
 from pathlib import Path
 
-NOME = "Fra Tak Studio"
+NOME = "Tipico Lab"
 SUPPORTO = Path.home() / "Library" / "Application Support" / NOME
 LOG = Path.home() / "Library" / "Logs" / f"{NOME}.log"
-_VECCHIA = SUPPORTO.parent / "Fratak Studio"  # nome precedente del programma
-if _VECCHIA.exists() and not SUPPORTO.exists():
-    _VECCHIA.rename(SUPPORTO)
+NOMI_VECCHI = ("Fra Tak Studio", "Fratak Studio")  # nomi precedenti del programma
+for _v in NOMI_VECCHI:
+    if (SUPPORTO.parent / _v).exists() and not SUPPORTO.exists():
+        (SUPPORTO.parent / _v).rename(SUPPORTO)
 SUPPORTO.mkdir(parents=True, exist_ok=True)
 LOG.parent.mkdir(parents=True, exist_ok=True)
 logging.basicConfig(filename=str(LOG), level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -275,7 +276,7 @@ def crea_menu_barra():
                     url = f"http://127.0.0.1:{SRV.porta}/"
                     STATO["finestra"].load_url(url)
                 else:
-                    avviso(NOME, "Il server non è ripartito. Dettagli in ~/Library/Logs/Fra Tak Studio.log")
+                    avviso(NOME, "Il server non è ripartito. Dettagli in ~/Library/Logs/Tipico Lab.log")
             threading.Thread(target=lavoro, daemon=True).start()
 
         def esci_(self, _):
@@ -289,13 +290,13 @@ def crea_menu_barra():
         img.setTemplate_(True)
         voce.button().setImage_(img)
     else:
-        voce.button().setTitle_("F")
+        voce.button().setTitle_("T")
     voce.button().setToolTip_(NOME)
     menu = AppKit.NSMenu.alloc().init()
-    for titolo, azione, tasto in [("Apri Fra Tak Studio", "apri:", ""), (None, None, None),
+    for titolo, azione, tasto in [("Apri Tipico Lab", "apri:", ""), (None, None, None),
                                   ("Apri la cartella dei progetti", "progetti:", ""),
                                   ("Apri config.json", "config:", ""), ("Riavvia il server", "riavvia:", ""),
-                                  (None, None, None), ("Esci da Fra Tak Studio", "esci:", "q")]:
+                                  (None, None, None), ("Esci da Tipico Lab", "esci:", "q")]:
         if titolo is None:
             menu.addItem_(AppKit.NSMenuItem.separatorItem())
             continue
@@ -306,14 +307,47 @@ def crea_menu_barra():
     STATO["barra"] = (voce, azioni, menu)  # tiene vivi gli oggetti
 
 
+# ---------------- nome precedente e residui degli aggiornamenti ----------------
+def rinomina_bundle():
+    """Se l'app è ancora installata col nome precedente (es. "Fra Tak Studio.app", dopo l'aggiornamento
+    automatico dalla 1.0.0) si rinomina in "Tipico Lab.app" e si riapre. True = questa copia deve chiudersi."""
+    try:
+        from Foundation import NSBundle
+        b = Path(str(NSBundle.mainBundle().bundlePath()))
+    except Exception:  # noqa: BLE001
+        return False
+    if b.name not in {f"{n}.app" for n in NOMI_VECCHI} or "AppTranslocation" in str(b):
+        return False
+    nuovo = b.parent / f"{NOME}.app"
+    if nuovo.exists() or not os.access(b.parent, os.W_OK):
+        return False
+    try:
+        b.rename(nuovo)
+    except OSError:
+        log.exception("Rinomina dell'app")
+        return False
+    log.info("App rinominata: %s -> %s", b, nuovo)
+    subprocess.Popen(["/bin/sh", "-c", f'while kill -0 {os.getpid()} 2>/dev/null; do sleep 0.2; done; open "{nuovo}"'],
+                     start_new_session=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    return True
+
+
+def pulisci_aggiornamento():
+    """Toglie i file temporanei di un aggiornamento finito (la versione vecchia dell'app)."""
+    shutil.rmtree(SUPPORTO / ".aggiornamento", ignore_errors=True)
+
+
 # ---------------- avvio ----------------
 def main():
     log.info("---- avvio %s (Python %s)", NOME, sys.version.split()[0])
     os.environ["FRATAK_DATI"] = str(SUPPORTO)
     sys.path.insert(0, str(RISORSE))
+    if rinomina_bundle():
+        return
     if gia_aperta():
         log.info("Già aperta: porto in primo piano la finestra esistente")
         return
+    pulisci_aggiornamento()
     try:
         migra_dati()
         SRV.avvia()

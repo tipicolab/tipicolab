@@ -1,4 +1,4 @@
-"""Crea "Fra Tak Studio.app" con py2app. Non va lanciato a mano: usa build_app.sh."""
+"""Crea "Tipico Lab.app" con py2app. Non va lanciato a mano: usa build_app.sh."""
 from pathlib import Path
 
 from setuptools import setup
@@ -9,7 +9,7 @@ RISORSE = ["index.html", "canvas.js", "canvas.css", "models.json", "server.py", 
            "build_risorse/barra.png", "build_risorse/origine.txt"]
 
 OPZIONI = {
-    "iconfile": "build_risorse/Fra Tak Studio.icns",
+    "iconfile": "build_risorse/Tipico Lab.icns",
     "argv_emulation": False,
     "resources": RISORSE,
     # pacchetti veri (cartelle con __init__.py), copiati interi
@@ -19,17 +19,17 @@ OPZIONI = {
     "includes": ["bottle", "typing_extensions", "PyObjCTools.AppHelper", "server", "openrouter", "aggiornamenti", "fcntl", "csv",
                  "uuid", "mimetypes", "http.server", "urllib.request", "webbrowser"],
     "plist": {
-        "CFBundleName": "Fra Tak Studio",
-        "CFBundleDisplayName": "Fra Tak Studio",
+        "CFBundleName": "Tipico Lab",
+        "CFBundleDisplayName": "Tipico Lab",
         "CFBundleIdentifier": "it.fratak.studio",
         "CFBundleShortVersionString": VERSIONE,
         "CFBundleVersion": VERSIONE,
         "LSMinimumSystemVersion": "11.0",
         "NSHighResolutionCapable": True,
         "LSApplicationCategoryType": "public.app-category.graphics-design",
-        "NSHumanReadableCopyright": "Fra Tak Studio",
+        "NSHumanReadableCopyright": "Tipico Lab",
         "NSAppTransportSecurity": {"NSAllowsLocalNetworking": True},
     },
 }
 
-setup(name="Fra Tak Studio", app=["app_main.py"], options={"py2app": OPZIONI})
+setup(name="Tipico Lab", app=["app_main.py"], options={"py2app": OPZIONI})

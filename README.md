@@ -1,16 +1,16 @@
-# Fra Tak Studio
+# Tipico Lab
 
 App per Mac per generare immagini e video con i modelli di [OpenRouter](https://openrouter.ai), pagando a consumo con la **propria** chiave.
 
-- Tutto resta sul tuo computer: progetti, immagini e chiave stanno in `~/Library/Application Support/Fra Tak Studio/`.
+- Tutto resta sul tuo computer: progetti, immagini e chiave stanno in `~/Library/Application Support/Tipico Lab/`.
   Su GitHub c'è solo il codice dell'app.
-- Ognuno usa la sua chiave OpenRouter: al primo avvio apri l'icona **F** nella barra dei menu → *Apri config.json*,
+- Ognuno usa la sua chiave OpenRouter: al primo avvio apri l'icona **T** nella barra dei menu → *Apri config.json*,
   incolla la chiave al posto di `INCOLLA_QUI_LA_CHIAVE_OPENROUTER` (tra le virgolette), salva e scegli *Riavvia il server*.
 
 ## Installare
 
-1. Scarica `Fra-Tak-Studio.zip` dall'ultima versione nella pagina **Releases** (o ricevi l'app via AirDrop).
-2. Trascina **Fra Tak Studio** nella cartella **Applicazioni** (importante: da lì si aggiorna da sola).
+1. Scarica `Tipico-Lab.zip` dall'ultima versione nella pagina **Releases** (o ricevi l'app via AirDrop).
+2. Trascina **Tipico Lab** nella cartella **Applicazioni** (importante: da lì si aggiorna da sola).
 3. La prima volta macOS la blocca perché non è firmata da Apple: *Impostazioni di Sistema → Privacy e sicurezza →*
    in fondo **Apri comunque**. Serve solo la prima volta.
 

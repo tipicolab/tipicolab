@@ -1,4 +1,4 @@
-"""Supporto OpenRouter per Fra Tak Studio: immagini (/api/v1/images) e video (/api/v1/videos).
+"""Supporto OpenRouter per Tipico Lab: immagini (/api/v1/images) e video (/api/v1/videos).
 
 Il catalogo dei modelli viene letto dalle API pubbliche di OpenRouter e salvato in cache.
 I modelli mostrati nell'app sono quelli in PREDEFINITI più quelli che aggiungi da "+ Modelli".
@@ -21,15 +21,16 @@ APP = Path(__file__).resolve().parent
 
 def _cartella_dati():
     """Dove stanno i dati dell'utente (chiavi, modelli aggiunti, template, catalogo).
-    App per Mac: ~/Library/Application Support/Fra Tak Studio (passata con FRATAK_DATI).
+    App per Mac: ~/Library/Application Support/Tipico Lab (passata con FRATAK_DATI).
     Avvio dal Terminale: la stessa cartella se esiste già, altrimenti la cartella del programma."""
     env = os.environ.get("FRATAK_DATI")
     if env:
         return Path(env)
-    sup = Path.home() / "Library" / "Application Support" / "Fra Tak Studio"
-    vecchia = sup.parent / "Fratak Studio"
-    if vecchia.exists() and not sup.exists():
-        vecchia.rename(sup)  # il programma si chiamava "Fratak Studio"
+    sup = Path.home() / "Library" / "Application Support" / "Tipico Lab"
+    for nome in ("Fra Tak Studio", "Fratak Studio"):  # nomi precedenti del programma
+        vecchia = sup.parent / nome
+        if vecchia.exists() and not sup.exists():
+            vecchia.rename(sup)
     return sup if (sup / "config.json").exists() else APP
 
 
@@ -68,7 +69,7 @@ def chiave():
 
 
 def _http(method, url, body=None, auth=True, timeout=120, raw=False):
-    headers = {"Accept": "application/json", "HTTP-Referer": "http://127.0.0.1", "X-Title": "Fra Tak Studio"}
+    headers = {"Accept": "application/json", "HTTP-Referer": "http://127.0.0.1", "X-Title": "Tipico Lab"}
     if auth:
         headers["Authorization"] = "Bearer " + chiave()
     data = None

@@ -1,5 +1,5 @@
 #!/bin/bash
-# Doppio clic: crea (o aggiorna) "Fra Tak Studio.app" in Applicazioni e la controlla.
+# Doppio clic: crea (o aggiorna) "Tipico Lab.app" in Applicazioni e la controlla.
 # Non genera immagini e non usa crediti.
 cd "$(dirname "$0")"
 chmod +x build_app.sh verifica_app.sh 2>/dev/null

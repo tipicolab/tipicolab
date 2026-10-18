@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fra Tak Studio — app locale per generare immagini e video con fal.ai o OpenRouter, pagando solo quello che usi.
+"""Tipico Lab — app locale per generare immagini e video con fal.ai o OpenRouter, pagando solo quello che usi.
 
 Avvio: doppio clic su "Avvia Studio.command" (oppure: python3 server.py).
 Le chiavi restano in config.json su questo computer e non viene mai mandata al browser.
@@ -35,9 +35,10 @@ MODELS = APP / "models.json"
 AGGIUNTI = DATI / "modelli_aggiunti.json"
 FAL_API = os.environ.get("FAL_API", "https://api.fal.ai/v1")
 # Le immagini generate restano dentro l'app (cartella privata in Libreria): escono solo con "Scarica".
-CARTELLA_DEFAULT = "~/Library/Application Support/Fra Tak Studio/Progetti"
+CARTELLA_DEFAULT = "~/Library/Application Support/Tipico Lab/Progetti"
 CARTELLE_VECCHIE = {"~/Studio AI/Progetti", "~/Documents/Studio AI", "~/Documents/Fratak Studio",
-                    "~/Documents/Fra Tak Studio"}
+                    "~/Documents/Fra Tak Studio", "~/Library/Application Support/Fra Tak Studio/Progetti",
+                    "~/Library/Application Support/Fratak Studio/Progetti"}
 CAMPI_NASCOSTI = {"prompt", "sync_mode", "end_user_id", "webhook_url"}
 FAL_QUEUE = os.environ.get("FAL_QUEUE", "https://queue.fal.run")
 FAL_REST = os.environ.get("FAL_REST", "https://rest.fal.ai")
@@ -59,7 +60,7 @@ def config():
     if chiave == SEGNAPOSTO:
         chiave = ""
     valore = cfg.get("cartella_progetti", CARTELLA_DEFAULT)
-    if valore in CARTELLE_VECCHIE:
+    if os.path.expanduser(valore).rstrip("/") in {os.path.expanduser(v) for v in CARTELLE_VECCHIE}:
         # sposta i progetti nella nuova cartella in Documenti (una volta sola)
         vecchia, valore = Path(os.path.expanduser(valore)), CARTELLA_DEFAULT
         nuova = Path(os.path.expanduser(valore))
@@ -783,7 +784,7 @@ def main():
     chiave, radice = prepara()
     srv = ThreadingHTTPServer(("127.0.0.1", PORT), Handler)
     url = f"http://127.0.0.1:{PORT}"
-    print(f"\n  Fra Tak Studio è aperto su {url}")
+    print(f"\n  Tipico Lab è aperto su {url}")
     print(f"  Progetti in: {radice}")
     if not chiave and not openrouter.chiave():
         print("  ATTENZIONE: manca una chiave (OpenRouter o fal). Aprila in config.json.")

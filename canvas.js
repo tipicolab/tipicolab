@@ -1,4 +1,4 @@
-/* Fra Tak Studio — Canvas a nodi (stile Higgsfield Canvas).
+/* Tipico Lab — Canvas a nodi (stile Higgsfield Canvas).
    Riusa la logica di generazione di index.html: lanciaGenerazione() → /api/genera, /api/lavoro,
    compilaPromptCon() per i tag, /api/stima per i costi, segnaposto condivisi con la Griglia.
    Board salvata per progetto in canvas.json (versione 2) tramite /api/canvas. */

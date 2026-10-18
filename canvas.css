@@ -1,4 +1,4 @@
-/* Fra Tak Studio — Canvas a nodi. Usa le variabili, il font e i raggi di index.html. */
+/* Tipico Lab — Canvas a nodi. Usa le variabili, il font e i raggi di index.html. */
 :root{--canvas:#f5f5f4;--dot:#d3d3d1;--nb-ring:rgba(70,91,210,.2);
   --t-testo:#8e8e8e;--t-image:var(--acc);--t-video:#8b4fd6;--t-audio:#23866a;--nota:#fff6cc}
 main.modo-canvas{display:block;position:fixed;top:var(--bar-h,72px);left:0;right:0;bottom:0;height:auto}

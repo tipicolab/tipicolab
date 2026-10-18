@@ -1,7 +1,7 @@
-"""Aggiornamenti automatici di Fra Tak Studio.
+"""Aggiornamenti automatici di Tipico Lab.
 
 Le versioni nuove si pubblicano su GitHub (pagina "Releases" del repository): GitHub costruisce l'app
-e la allega come Fra-Tak-Studio.zip. All'avvio l'app controlla se c'è una versione più recente e, se
+e la allega come Tipico-Lab.zip. All'avvio l'app controlla se c'è una versione più recente e, se
 l'utente lo chiede, la scarica, sostituisce quella in Applicazioni e si riapre.
 Tocca solo il programma: chiavi, progetti e impostazioni (in Application Support) restano come sono.
 Nessuna chiave serve per controllare o scaricare: il repository è pubblico.
@@ -18,8 +18,8 @@ from pathlib import Path
 
 REPO = "tipicolab/tipicolab"  # proprietario/nome del repository su GitHub
 API = os.environ.get("FRATAK_GITHUB_API", "https://api.github.com")
-ASSET = "Fra-Tak-Studio.zip"
-NOME_APP = "Fra Tak Studio.app"
+ASSET = "Tipico-Lab.zip"
+NOME_APP = "Tipico Lab.app"
 
 
 def _qui():
@@ -50,7 +50,7 @@ def piu_nuova(a, b):
 
 
 # Impostati dall'app per Mac (app_main.py). Senza, si è nella versione "da cartella" e non si installa nulla.
-BUNDLE = None  # percorso di Fra Tak Studio.app in esecuzione
+BUNDLE = None  # percorso di Tipico Lab.app in esecuzione
 ESCI = None    # funzione che chiude l'app
 CARTELLA_LAVORO = None  # dove scaricare (Application Support)
 
@@ -61,7 +61,7 @@ _lock = threading.Lock()
 
 def _get_json(url, timeout=15):
     req = urllib.request.Request(url, headers={"Accept": "application/vnd.github+json",
-                                               "User-Agent": "Fra-Tak-Studio"})
+                                               "User-Agent": "Tipico-Lab"})
     with urllib.request.urlopen(req, timeout=timeout) as r:
         return json.loads(r.read().decode("utf-8"))
 
@@ -69,10 +69,10 @@ def _get_json(url, timeout=15):
 def installabile():
     """Si può aggiornare da sola? Solo se è l'app vera, in una cartella dove può scrivere."""
     if not BUNDLE or sys.platform != "darwin":
-        return False, "Aggiornamento automatico disponibile solo nell'app (non da \"Avvia Fra Tak Studio.command\")."
+        return False, "Aggiornamento automatico disponibile solo nell'app (non da \"Avvia Tipico Lab.command\")."
     b = Path(BUNDLE)
     if "AppTranslocation" in str(b) or not b.exists():
-        return False, "Sposta Fra Tak Studio nella cartella Applicazioni, riaprila e riprova."
+        return False, "Sposta Tipico Lab nella cartella Applicazioni, riaprila e riprova."
     if not os.access(b.parent, os.W_OK):
         return False, f"Non ho il permesso di sostituire l'app in {b.parent}."
     return True, ""
@@ -102,7 +102,7 @@ def controlla(forza=False):
 
 
 def _scarica(url, dest):
-    req = urllib.request.Request(url, headers={"User-Agent": "Fra-Tak-Studio"})
+    req = urllib.request.Request(url, headers={"User-Agent": "Tipico-Lab"})
     with urllib.request.urlopen(req, timeout=60) as r, open(dest, "wb") as f:
         tot = int(r.headers.get("Content-Length") or 0)
         letti = 0
@@ -137,14 +137,18 @@ def _installa():
             raise RuntimeError("Il file scaricato non contiene l'app.")
         subprocess.run(["xattr", "-dr", "com.apple.quarantine", str(nuova)], capture_output=True)
         attuale = Path(BUNDLE)
+        destinazione = attuale.parent / NOME_APP
+        if destinazione.exists() and destinazione != attuale:
+            destinazione = attuale
         vecchia = lavoro / "vecchia.app"
         _stato["fase"] = "Installo…"
         shutil.move(str(attuale), str(vecchia))
         try:
-            shutil.move(str(nuova), str(attuale))
+            shutil.move(str(nuova), str(destinazione))
         except Exception:
             shutil.move(str(vecchia), str(attuale))  # rimette com'era
             raise
+        attuale = destinazione
         subprocess.run(["touch", str(attuale)], capture_output=True)
         _stato["fase"] = "Riavvio…"
         # riapre l'app appena questa copia è chiusa, poi cancella la vecchia versione

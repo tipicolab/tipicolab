@@ -1,4 +1,4 @@
-# Quando cambia il numero nel file VERSIONE, GitHub costruisce Fra Tak Studio.app su un Mac e la pubblica
+# Quando cambia il numero nel file VERSIONE, GitHub costruisce Tipico Lab.app su un Mac e la pubblica
 # nella pagina Releases (con il tag v<numero>). Le app già installate la trovano e propongono l'aggiornamento.
 name: Pubblica una versione
 
@@ -45,9 +45,11 @@ jobs:
 
       - name: Controlli
         run: |
-          APP="_build-app/dist/Fra Tak Studio.app"
-          lipo -archs "$APP/Contents/MacOS/Fra Tak Studio"
+          APP="_build-app/dist/Tipico Lab.app"
+          lipo -archs "$APP/Contents/MacOS/Tipico Lab"
           plutil -p "$APP/Contents/Info.plist" | grep ShortVersion
+          unzip -l "_build-app/Fra-Tak-Studio.zip" | grep -q "Fra Tak Studio.app/Contents/MacOS/" || { echo "zip di compatibilità sbagliato"; exit 1; }
+          unzip -l "_build-app/Tipico-Lab.zip" | grep -q "Tipico Lab.app/Contents/MacOS/" || { echo "zip sbagliato"; exit 1; }
           for f in index.html canvas.js canvas.css server.py openrouter.py aggiornamenti.py VERSIONE models.json; do
             test -f "$APP/Contents/Resources/$f" || { echo "manca $f"; exit 1; }
           done
@@ -60,7 +62,7 @@ jobs:
           cd "$APP/Contents/Resources"
           /Library/Frameworks/Python.framework/Versions/3.13/bin/python3 server.py & PID=$!
           for i in $(seq 1 30); do curl -sf http://127.0.0.1:8765/api/stato >/dev/null && break; sleep 1; done
-          curl -sf http://127.0.0.1:8765/ | grep -q "Fra Tak Studio"
+          curl -sf http://127.0.0.1:8765/ | grep -q "Tipico Lab"
           curl -sf http://127.0.0.1:8765/api/aggiornamento
           kill $PID
 
@@ -71,5 +73,5 @@ jobs:
           V: ${{ steps.v.outputs.versione }}
         run: |
           NOTE="$(sed -n '/^## '"$V"'$/,/^## /p' NOVITA.md | sed '1d;/^## /d')"
-          gh release create "v$V" "_build-app/Fra-Tak-Studio.zip" --target "$GITHUB_SHA" \
-            --title "Fra Tak Studio $V" --notes "${NOTE:-Aggiornamento di Fra Tak Studio.}"
+          gh release create "v$V" "_build-app/Tipico-Lab.zip" "_build-app/Fra-Tak-Studio.zip" --target "$GITHUB_SHA" \
+            --title "Tipico Lab $V" --notes "${NOTE:-Aggiornamento di Tipico Lab.}"

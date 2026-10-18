@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Fra Tak Studio</title>
+<title>Tipico Lab</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -245,7 +245,7 @@ dialog::backdrop{background:rgba(0,0,0,.45);backdrop-filter:blur(2px)}
 </head>
 <body>
 <header class="bar">
-  <div class="brand"><i></i>Fra Tak Studio</div>
+  <div class="brand"><i></i>Tipico Lab</div>
   <select id="progetto" title="Progetto"></select>
   <div class="prog-menu"><button id="progettoMenu" class="btn-ghost" title="Rinomina o elimina il progetto" aria-haspopup="menu">⋯</button>
     <div class="pop" id="progettoPop" hidden role="menu"><button data-p="rinomina" role="menuitem">Rinomina progetto…</button><button data-p="elimina" class="rosso" role="menuitem">Elimina progetto…</button></div></div>
@@ -745,7 +745,7 @@ setTimeout(controllaAggiornamenti,4000);setInterval(controllaAggiornamenti,6*360
 function canvasMancante(){
   try{localStorage.setItem('vista','griglia')}catch(e){}
   document.querySelectorAll('#vistaSwitch button').forEach(b=>b.onclick=()=>{
-    if(b.dataset.v==='canvas')alert('La Canvas non si è caricata.\n\nChiudi la finestra del Terminale di Fra Tak Studio e riapri "Avvia Fra Tak Studio.command": il server deve ripartire per usare la versione aggiornata.')})}
+    if(b.dataset.v==='canvas')alert('La Canvas non si è caricata.\n\nChiudi la finestra del Terminale di Tipico Lab e riapri "Avvia Tipico Lab.command": il server deve ripartire per usare la versione aggiornata.')})}
 </script>
 <script src="/canvas.js" onerror="canvasMancante()"></script>
 </body>

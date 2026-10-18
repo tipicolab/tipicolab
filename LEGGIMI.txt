@@ -1,19 +1,19 @@
-FRA TAK STUDIO — generazione immagini e video a consumo (OpenRouter)
+TIPICO LAB — generazione immagini e video a consumo (OpenRouter)
 
 AVVIO
-- App: apri "Fra Tak Studio" da Applicazioni, Launchpad o dal Dock.
+- App: apri "Tipico Lab" da Applicazioni, Launchpad o dal Dock.
   ⌘W chiude la finestra (l'app resta nella barra dei menu), ⌘Q esce del tutto.
-  Dall'icona "F" nella barra dei menu: apri l'app, la cartella dei progetti,
+  Dall'icona "T" nella barra dei menu: apri l'app, la cartella dei progetti,
   config.json, riavvia il server, esci.
-- Riserva: doppio clic su "Avvia Fra Tak Studio.command" (apre il browser).
+- Riserva: doppio clic su "Avvia Tipico Lab.command" (apre il browser).
 
 I TUOI DATI
 Chiave, modelli aggiunti, template e catalogo stanno in
-  ~/Library/Application Support/Fra Tak Studio/
-(li usano sia l'app sia "Avvia Fra Tak Studio.command"). Per cambiare la chiave:
-icona F nella barra dei menu → "Apri config.json", incolla la nuova (lascia le
+  ~/Library/Application Support/Tipico Lab/
+(li usano sia l'app sia "Avvia Tipico Lab.command"). Per cambiare la chiave:
+icona T nella barra dei menu → "Apri config.json", incolla la nuova (lascia le
 virgolette), salva e scegli "Riavvia il server".
-Errori dell'app: ~/Library/Logs/Fra Tak Studio.log
+Errori dell'app: ~/Library/Logs/Tipico Lab.log
 
 AGGIORNAMENTI
 All'avvio l'app controlla su GitHub se c'è una versione nuova e propone
@@ -21,7 +21,7 @@ All'avvio l'app controlla su GitHub se c'è una versione nuova e propone
 Chiave e progetti restano come sono. L'app deve stare nella cartella Applicazioni.
 
 RICREARE L'APP DOPO UNA MODIFICA
-1. Doppio clic su "Crea app Fra Tak Studio.command".
+1. Doppio clic su "Crea app Tipico Lab.command".
 2. Aspetta "Premi un tasto per chiudere": l'app in Applicazioni è aggiornata
    (la vecchia viene chiusa e sostituita, i tuoi dati non si toccano).
 La cartella _build-app contiene solo file per la costruzione: si può cancellare,
@@ -33,11 +33,11 @@ USO
 - "+ Modelli": cerca altri modelli nel catalogo e aggiungili al menu.
 - Dopo ogni generazione viene salvato il COSTO REALE.
 - Le immagini generate restano dentro l'app (cartella privata:
-  ~/Library/Application Support/Fra Tak Studio/Progetti/<progetto>/, con accanto
+  ~/Library/Application Support/Tipico Lab/Progetti/<progetto>/, con accanto
   un .json con prompt, parametri e costo, e spese.csv con lo storico spese).
 - Per salvarne una dove vuoi: icona "Scarica" sull'immagine → si apre la finestra
   del Mac e scegli cartella e nome.
-- Con "Avvia Fra Tak Studio.command" si chiude chiudendo la finestra del Terminale.
+- Con "Avvia Tipico Lab.command" si chiude chiudendo la finestra del Terminale.
 
 TAG DELLE REFERENCE
 - Ogni reference caricata riceve un tag: @img1, @img2, @img3…
@@ -60,6 +60,6 @@ SE MACOS NON APRE L'APP O UN FILE .command
 Clic destro sul file (o sull'app in Applicazioni) → Apri → Apri. Basta la prima volta.
 In alternativa: Impostazioni di Sistema → Privacy e sicurezza → in fondo "Apri comunque".
 
-SE MACOS NON APRE "Avvia Fra Tak Studio.command" NEMMENO COSÌ
+SE MACOS NON APRE "Avvia Tipico Lab.command" NEMMENO COSÌ
 Apri il Terminale, scrivi  cd  + spazio, trascina dentro la cartella AI Dashboard, Invio, poi:
-  xattr -dr com.apple.quarantine . && chmod +x "Avvia Fra Tak Studio.command" && python3 server.py
+  xattr -dr com.apple.quarantine . && chmod +x "Avvia Tipico Lab.command" && python3 server.py

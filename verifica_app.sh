@@ -19,7 +19,7 @@ sleep 3
 STATO=$(curl -s "http://127.0.0.1:$P/api/stato")
 echo "$STATO" | python3 -c 'import json,sys;d=json.load(sys.stdin);print("  ..  chiave OpenRouter:", "presente" if d["chiavi"]["openrouter"] else "MANCANTE");print("  ..  modelli nel menu:", len(d["modelli"]), "· aggiunti:", sum(1 for m in d["modelli"] if m.get("aggiunto")));print("  ..  progetti:", len(d["progetti"]), "in", d["cartella"])'
 PRIMA="$STATO"
-for f in index.html canvas.js canvas.css; do
+for f in index.html canvas.js canvas.css i18n.js; do
   c=$(curl -s -o /dev/null -w "%{http_code}" "http://127.0.0.1:$P/${f/index.html/}"); [ "$c" = 200 ] && ok "$f" || ko "$f ($c)"
 done
 [ -f "$SUP/config.json" ] && ok "dati in Application Support" || ko "config.json non trovato in Application Support"

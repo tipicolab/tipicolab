@@ -285,7 +285,7 @@ function corpoGen(n,c){
   const run=corse.get(n.id);let out;
   if(run){const ar=run.ar||{w:1,h:1};out=`<div class="ph ${run.errore?'err':''}" style="aspect-ratio:${ar.w} / ${ar.h}"><div class="ph-eti"><b>${esc(nomeBreve(m?m.nome:''))}</b><span class="ph-stato">${esc(statoCorsa(n))}</span></div><div class="ph-err"><p>${esc(run.errore?'Errore: '+run.errore:'')}</p><button class="ph-x" title="Chiudi">×</button></div></div>`}
   else{const f=fileDi(n);
-    out=f?`<div class="nd-media">${kindDa(f)==='video'?`<video src="${url(f)}" muted loop playsinline controls preload="metadata"></video>`:`<img src="${url(f)}" alt="" draggable="false">`}<div class="nd-az"><button class="icona-btn" data-az="scarica" title="Scarica… (scegli la cartella)">${ICONA.scarica}</button>${kindDa(f)==='video'?'':`<button class="icona-btn" data-az="ref" title="Usa come reference (nuovo nodo collegabile)">${ICONA.ref}</button>`}</div></div>`
+    out=f?`<div class="nd-media">${kindDa(f)==='video'?`<video src="${url(f)}" muted loop playsinline controls preload="metadata"></video>`:`<img src="${url(f)}" alt="" draggable="false">`}<div class="nd-az"><button class="icona-btn" data-az="scarica" title="Scarica">${ICONA.scarica}</button>${kindDa(f)==='video'?'':`<button class="icona-btn" data-az="ref" title="Usa come reference (nuovo nodo collegabile)">${ICONA.ref}</button>`}</div></div>`
       :`<div class="vuoto">${m?'Collega un prompt e premi Genera':'Scegli un modello'}</div>`}
   const strip=(n.risultati||[]).map((f,i)=>`<div class="th ${i===(n.sel??0)?'on':''}" data-i="${i}" title="Clic: seleziona · trascina sulla board: nuovo nodo Reference">${kindDa(f)==='video'?`<video src="${url(f)}" muted preload="metadata"></video>`:`<img src="${url(f)}" alt="" loading="lazy">`}</div>`).join('');
   c.innerHTML=`<div class="nd-ingressi">${ingressi}</div><select class="nd-modello" aria-label="Modello">${m?'':'<option value="">— scegli un modello —</option>'}${opzioniModelli(n.modello)}</select>
@@ -493,7 +493,7 @@ function menuNodo(n,x,y){const f=fileDi(n);const V_=[];
   if(n.tipo!=='frame'&&n.tipo!=='nota'){V_.push('-',{t:'Copia prompt',off:!testoPrompt(n),f:()=>{navigator.clipboard.writeText(testoPrompt(n));toast('Prompt copiato')}});
     V_.push({t:'Usa come reference',off:!(n.tipo==='gen'&&f),f:()=>usaRefDaNodo(n)});
     V_.push({t:'Apri file',off:!f,f:()=>api('/api/apri-cartella',{progetto:B.progetto,file:f}).catch(()=>{})},
-      {t:'Scarica…',off:!f,f:()=>scaricaFile(B.progetto,f)})}
+      {t:'Scarica',off:!f,f:()=>scaricaFile(B.progetto,f)})}
   mostraMenu(V_,x,y)}
 /* risultato di una generazione → nuovo nodo Reference accanto, pronto da collegare */
 function usaRefDaNodo(n){const f=fileDi(n);if(!f)return;const d=dimNodo(n);const p=postoLibero(n.x+d.w+80,n.y,LARGH.ref,260,[]);

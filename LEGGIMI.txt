@@ -39,6 +39,16 @@ USO
   del Mac e scegli cartella e nome.
 - Con "Avvia Tipico Lab.command" si chiude chiudendo la finestra del Terminale.
 
+CARTELLA DI SALVATAGGIO DI OGNI PROGETTO
+- "Modifica" accanto al nome del progetto → "Scegli la cartella di salvataggio…".
+- Da lì in poi "Scarica" mette il file direttamente in quella cartella: se c'è già
+  non lo duplica; se c'è un file diverso con lo stesso nome aggiunge " 2", " 3"…
+- "Salva tutti i file nella cartella" copia quelli che mancano.
+- Senza cartella scelta, "Scarica" chiede ogni volta dove salvare.
+
+LINGUA
+- Menu in alto a destra: Italiano / English (vale anche per il menu nella barra in alto).
+
 TAG DELLE REFERENCE
 - Ogni reference caricata riceve un tag: @img1, @img2, @img3…
 - Nel prompt scrivi @ e scegli la reference dal menu (frecce + Invio),

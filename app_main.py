@@ -143,6 +143,7 @@ class Server:
             aggiornamenti.CARTELLA_LAVORO = str(SUPPORTO)
         except Exception:  # noqa: BLE001
             log.exception("Aggiornamenti non disponibili")
+        server.SCEGLI_CARTELLA = scegli_cartella_nativa
         if self.porta is None:
             server.prepara()
         self.porta = porta or porta_libera()
@@ -225,6 +226,17 @@ def sul_thread_principale(fn):
     AppHelper.callAfter(fn)
 
 
+def scegli_cartella_nativa(titolo):
+    """Finestra "Scegli cartella" del Mac, sopra la finestra dell'app. None se annullata."""
+    import webview
+    w = STATO["finestra"]
+    if not w:
+        return None
+    tipo = getattr(getattr(webview, "FileDialog", None), "FOLDER", None) or webview.FOLDER_DIALOG
+    r = w.create_file_dialog(tipo, directory=str(Path.home()))
+    return r[0] if r else None
+
+
 def mostra_finestra():
     def f():
         w = STATO["finestra"]
@@ -293,6 +305,7 @@ def crea_menu_barra():
         voce.button().setTitle_("T")
     voce.button().setToolTip_(NOME)
     menu = AppKit.NSMenu.alloc().init()
+    voci = {}
     for titolo, azione, tasto in [("Apri Tipico Lab", "apri:", ""), (None, None, None),
                                   ("Apri la cartella dei progetti", "progetti:", ""),
                                   ("Apri config.json", "config:", ""), ("Riavvia il server", "riavvia:", ""),
@@ -303,8 +316,35 @@ def crea_menu_barra():
         it = AppKit.NSMenuItem.alloc().initWithTitle_action_keyEquivalent_(titolo, azione, tasto)
         it.setTarget_(azioni)
         menu.addItem_(it)
+        voci[titolo] = it
     voce.setMenu_(menu)
-    STATO["barra"] = (voce, azioni, menu)  # tiene vivi gli oggetti
+    STATO["barra"] = (voce, azioni, menu, voci)  # tiene vivi gli oggetti
+    applica_lingua(lingua_salvata())
+    try:
+        SRV.mod.ALLA_LINGUA = lambda l: sul_thread_principale(lambda: applica_lingua(l))
+    except Exception:  # noqa: BLE001
+        pass
+
+
+MENU_EN = {"Apri Tipico Lab": "Open Tipico Lab", "Apri la cartella dei progetti": "Open the projects folder",
+           "Apri config.json": "Open config.json", "Riavvia il server": "Restart the server",
+           "Esci da Tipico Lab": "Quit Tipico Lab"}
+
+
+def lingua_salvata():
+    try:
+        return "en" if (SUPPORTO / "lingua.txt").read_text().strip() == "en" else "it"
+    except OSError:
+        return "it"
+
+
+def applica_lingua(l):
+    """Traduce le voci del menu nella barra (la lingua si sceglie in alto a destra nell'app)."""
+    try:
+        for it_, voce in STATO["barra"][3].items():
+            voce.setTitle_(MENU_EN.get(it_, it_) if l == "en" else it_)
+    except Exception:  # noqa: BLE001
+        log.exception("Lingua del menu")
 
 
 # ---------------- nome precedente e residui degli aggiornamenti ----------------

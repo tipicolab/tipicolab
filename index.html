@@ -49,8 +49,17 @@ button:disabled{opacity:.4;cursor:not-allowed}
 .brand i{width:14px;height:14px;border-radius:5px;background:var(--acc);display:block}
 .bar select{width:auto;min-width:220px;max-width:320px;font-weight:600}
 .bar .spazio{flex:1}
+.bar select.lingua{min-width:0;width:auto;font-weight:500;font-size:14px;padding-right:36px}
 .prog-menu{position:relative}
-.prog-menu>button{padding:10px 14px;font-size:16px;line-height:1}
+.prog-menu>button{display:flex;align-items:center;gap:7px;padding:10px 14px;line-height:1}
+.prog-menu>button svg{width:16px;height:16px}
+.prog-menu .pop hr{border:0;border-top:1px solid var(--line);margin:6px 4px}
+.prog-menu .pop-info{padding:6px 12px 4px;font-size:12.5px;color:var(--mute);line-height:1.4;max-width:300px;overflow-wrap:anywhere}
+.prog-menu .pop-info b{color:var(--ink);font-weight:600}
+.testa .dest{color:var(--mute);font-size:14px;padding-bottom:5px;display:flex;align-items:center;gap:6px}
+.testa .dest button{background:transparent;padding:0;border-radius:0;color:var(--acc);font-size:14px;font-weight:500}
+.testa .dest button:hover{text-decoration:underline;background:transparent}
+.testa .dest.rotta{color:var(--err)}
 .prog-menu .pop{position:absolute;top:calc(100% + 6px);left:0;z-index:40;background:#fff;border:1px solid var(--line);border-radius:12px;
   box-shadow:0 14px 40px rgba(0,0,0,.16);padding:5px;min-width:210px;display:flex;flex-direction:column}
 .prog-menu .pop button{background:transparent;text-align:left;padding:9px 12px;border-radius:8px;font-weight:400;font-size:14px}
@@ -247,14 +256,24 @@ dialog::backdrop{background:rgba(0,0,0,.45);backdrop-filter:blur(2px)}
 <header class="bar">
   <div class="brand"><i></i>Tipico Lab</div>
   <select id="progetto" title="Progetto"></select>
-  <div class="prog-menu"><button id="progettoMenu" class="btn-ghost" title="Rinomina o elimina il progetto" aria-haspopup="menu">⋯</button>
-    <div class="pop" id="progettoPop" hidden role="menu"><button data-p="rinomina" role="menuitem">Rinomina progetto…</button><button data-p="elimina" class="rosso" role="menuitem">Elimina progetto…</button></div></div>
+  <div class="prog-menu"><button id="progettoMenu" class="btn-ghost" title="Rinomina, elimina, cartella di salvataggio" aria-haspopup="menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg><span>Modifica</span></button>
+    <div class="pop" id="progettoPop" hidden role="menu">
+      <button data-p="rinomina" role="menuitem">Rinomina progetto…</button>
+      <hr>
+      <div class="pop-info" id="destInfo"></div>
+      <button data-p="dest" role="menuitem" id="pDest">Scegli la cartella di salvataggio…</button>
+      <button data-p="tutto" role="menuitem" id="pTutto">Salva tutti i file nella cartella</button>
+      <button data-p="destVia" role="menuitem" id="pDestVia">Non usare più questa cartella</button>
+      <hr>
+      <button data-p="elimina" class="rosso" role="menuitem">Elimina progetto…</button></div></div>
   <button id="nuovo" class="btn-ghost">+ Nuovo progetto</button>
   <div class="switch" id="vistaSwitch" role="tablist" aria-label="Vista"><button data-v="griglia" class="on">Griglia</button><button data-v="canvas">Canvas</button></div>
   <span class="spazio"></span>
   <button id="apriModelli" class="btn-ghost">+ Modelli</button>
   <button id="cartella" class="btn-ghost">Apri cartella</button>
+  <select id="lingua" class="lingua" title="Lingua · Language" aria-label="Lingua"><option value="it">🇮🇹 Italiano</option><option value="en">🇬🇧 English</option></select>
 </header>
+<script src="/i18n.js"></script>
 <main>
   <aside>
     <div class="intro"><h1>Crea</h1><p>Immagini e video con i modelli che scegli tu. Paghi solo quello che generi.</p></div>
@@ -304,7 +323,7 @@ dialog::backdrop{background:rgba(0,0,0,.45);backdrop-filter:blur(2px)}
     </div>
   </aside>
   <section>
-    <div class="testa"><h2 id="titolo">—</h2><span class="spesa" id="spesa"></span></div>
+    <div class="testa"><h2 id="titolo">—</h2><span class="spesa" id="spesa"></span><span class="dest" id="destRiga"></span></div>
     <div class="lavori" id="lavori"></div>
     <div class="griglia" id="griglia"></div>
   </section>
@@ -506,15 +525,36 @@ async function caricaProgetto(){
   const nome=$('#progetto').value;try{localStorage.setItem('progetto',nome)}catch(e){}
   $('#titolo').textContent=nome;const d=await api('/api/progetto?nome='+encodeURIComponent(nome));
   $('#spesa').textContent=d.elementi.length?`${d.elementi.length} file · spesa totale ${usd(d.totale_usd)}`:'';
-  S.ultimo={nome,d};
+  S.ultimo={nome,d};S.dest=S.dest||{};S.dest[nome]=d.destinazione?{p:d.destinazione,b:d.destinazione_breve,ok:d.destinazione_ok}:null;disegnaDest();
   disegnaGriglia(nome,d);
   if(window.cvAggiorna)cvAggiorna(nome,d);
 }
 /* ---------- azioni su un file generato: scarica (finestra "Salva" del Mac nell'app) e usa come reference ---------- */
 const ICONA={scarica:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg>',
   ref:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="14" height="14" rx="2.5"/><path d="m3 15 4-4 4 4 2-2 4 4"/><path d="M19 3v6M16 6h6"/></svg>'};
-function scaricaFile(nome,file){const a=document.createElement('a');a.href=`/file?progetto=${encodeURIComponent(nome)}&nome=${encodeURIComponent(file)}`;
-  a.download=file;document.body.appendChild(a);a.click();a.remove()}
+/* Scarica: se il progetto ha una cartella di salvataggio il file va lì (senza doppioni), altrimenti si apre la finestra "Salva" del Mac */
+const ultimaCartella=p=>String(p||'').replace(/\/+$/,'').split('/').pop()||p;
+async function scaricaFile(nome,file){
+  let r;try{r=await api('/api/salva-in-destinazione',{progetto:nome,file})}catch(e){alert(e.message);return}
+  if(r.nessuna){const a=document.createElement('a');a.href=`/file?progetto=${encodeURIComponent(nome)}&nome=${encodeURIComponent(file)}`;
+    a.download=file;document.body.appendChild(a);a.click();a.remove();return}
+  const c=ultimaCartella(r.cartella);
+  avvisa(r.stato==='gia'?`Già salvato in "${c}"`:r.nome!==file?`Salvato in "${c}" come ${r.nome}`:`Salvato in "${c}"`)}
+function disegnaDest(){
+  const nome=$('#progetto').value,d=(S.dest||{})[nome],riga=$('#destRiga');
+  riga.classList.toggle('rotta',!!(d&&!d.ok));
+  if(d){riga.innerHTML=`<span>${d.ok?'Download in':'Cartella non trovata:'}</span><button id="destApri" title="${esc(d.p)}">📁 ${esc(ultimaCartella(d.p))}</button>`;
+    $('#destApri').onclick=()=>d.ok?api('/api/mostra-nel-finder',{percorso:d.p}):cambiaDest(nome)}
+  else{riga.innerHTML=`<button id="destScegli">Scegli dove salvare i download</button>`;$('#destScegli').onclick=()=>cambiaDest(nome)}
+  $('#destInfo').innerHTML=d?`I download vanno in:<br><b>${esc(d.b||d.p)}</b>`:'I download chiedono ogni volta dove salvare.';
+  $('#pTutto').hidden=$('#pDestVia').hidden=!d;
+  $('#pDest').textContent=d?'Cambia cartella di salvataggio…':'Scegli la cartella di salvataggio…'}
+async function cambiaDest(nome,rimuovi){
+  try{const r=await api('/api/destinazione',{progetto:nome,azione:rimuovi?'rimuovi':'scegli'});
+    if(r.annullato)return;
+    S.dest[nome]=r.destinazione?{p:r.destinazione,b:r.destinazione_breve,ok:r.destinazione_ok}:null;disegnaDest();
+    avvisa(r.destinazione?`I download di "${nome}" vanno in "${ultimaCartella(r.destinazione)}"`:'I download chiederanno ogni volta dove salvare')}
+  catch(e){alert(e.message)}}
 let avvisoT=null;function avvisa(t){const x=$('#avvisoRef');x.textContent=t;x.classList.add('on');clearTimeout(avvisoT);avvisoT=setTimeout(()=>x.classList.remove('on'),2600)}
 async function usaComeRefDaFile(nome,file){
   if(document.querySelector('main').classList.contains('modo-canvas')&&window.cvUsaRef){window.cvUsaRef(file);return}
@@ -530,7 +570,7 @@ function apri(nome,e){const src=`/file?progetto=${encodeURIComponent(nome)}&nome
   const refs=(e.reference||[]).length?`\nReference: ${e.reference.join(', ')}`:'';
   $('#vistaTesto').innerHTML=`<b>${esc(e.modello)}</b> · ${esc(e.data)} · ${e.costo_reale?'costo reale ':'stimato ~'}${usd(e.costo_usd??e.costo_stimato_usd)}\n${esc(JSON.stringify(e.parametri))}${e.seed!=null?'  seed '+esc(e.seed):''}${esc(refs)}\n\n${promptHtml(e.prompt)}`;
   const vid=/\.(mp4|mov|webm)$/i.test(e.file);
-  $('#vistaAzioni').innerHTML=`<button class="btn-dark" data-v="scarica">${ICONA.scarica}Scarica…</button>`+(vid?'':`<button data-v="ref">${ICONA.ref}Usa come reference</button>`)+
+  $('#vistaAzioni').innerHTML=`<button class="btn-dark" data-v="scarica">${ICONA.scarica}Scarica</button>`+(vid?'':`<button data-v="ref">${ICONA.ref}Usa come reference</button>`)+
     (e.prompt?`<button data-v="riusa">Riusa prompt</button>`:'');
   $('#vistaAzioni').querySelectorAll('button').forEach(b=>b.onclick=()=>{const v=b.dataset.v;
     if(v==='scarica')scaricaFile(nome,e.file);
@@ -579,6 +619,11 @@ $('#progettoMenu').onclick=ev=>{ev.stopPropagation();$('#progettoPop').hidden=!$
 document.addEventListener('click',ev=>{if(!ev.target.closest('.prog-menu'))$('#progettoPop').hidden=true});
 $('#progettoPop').querySelectorAll('button').forEach(b=>b.onclick=async()=>{$('#progettoPop').hidden=true;
   const nome=$('#progetto').value;if(!nome)return;
+  if(b.dataset.p==='dest'){cambiaDest(nome);return}
+  if(b.dataset.p==='destVia'){cambiaDest(nome,true);return}
+  if(b.dataset.p==='tutto'){try{const r=await api('/api/salva-tutto',{progetto:nome});
+    const c=ultimaCartella(S.dest[nome].p);
+    avvisa(r.salvato?`${r.salvato} file salvati in "${c}"`+(r.gia?` · ${r.gia} c'erano già`:''):`Tutti i file sono già in "${c}"`)}catch(e){alert(e.message)}return}
   if(inCorso(nome)){alert('In questo progetto c\'è una generazione in corso: aspetta che finisca.');return}
   try{
     if(b.dataset.p==='rinomina'){
@@ -684,7 +729,7 @@ function disegnaGriglia(nome,d){
 function creaCard(nome,e){
   const n=document.createElement('div');n.className='card';n.dataset.f=e.file;n._e=e;
   const src=urlF(nome,e.file),vid=isVid(e.file),ar=G.ar[e.file]||arDaTesto((e.parametri||{}).aspect_ratio);
-  n.innerHTML=`<div class="media"${ar?` style="aspect-ratio:${ar.w} / ${ar.h}"`:''}>${vid?`<video src="${src}" muted loop playsinline preload="metadata"></video>`:`<img src="${src}" loading="lazy" alt="">`}<div class="az"><button class="icona-btn" data-az="scarica" title="Scarica… (scegli la cartella)">${ICONA.scarica}</button>${vid?'':`<button class="icona-btn" data-az="ref" title="Usa come reference">${ICONA.ref}</button>`}</div></div><div class="info"><div class="meta"><span class="chip">${esc(e.modello)}</span><span class="prezzo">${e.costo_reale?'':'~'}${usd(e.costo_usd??e.costo_stimato_usd)}</span></div><p class="p">${promptHtml(e.prompt)}</p><div><button class="btn-sm">Riusa prompt</button></div></div>`;
+  n.innerHTML=`<div class="media"${ar?` style="aspect-ratio:${ar.w} / ${ar.h}"`:''}>${vid?`<video src="${src}" muted loop playsinline preload="metadata"></video>`:`<img src="${src}" loading="lazy" alt="">`}<div class="az"><button class="icona-btn" data-az="scarica" title="Scarica">${ICONA.scarica}</button>${vid?'':`<button class="icona-btn" data-az="ref" title="Usa come reference">${ICONA.ref}</button>`}</div></div><div class="info"><div class="meta"><span class="chip">${esc(e.modello)}</span><span class="prezzo">${e.costo_reale?'':'~'}${usd(e.costo_usd??e.costo_stimato_usd)}</span></div><p class="p">${promptHtml(e.prompt)}</p><div><button class="btn-sm">Riusa prompt</button></div></div>`;
   const md=n.querySelector('img,video'),box=n.querySelector('.media');
   if(G.appena.has(e.file)){G.appena.delete(e.file);n.classList.add('entra')}
   const pronto=()=>{const w=md.naturalWidth||md.videoWidth,h=md.naturalHeight||md.videoHeight;
@@ -732,7 +777,7 @@ async function controllaAggiornamenti(){
   $('#aggSi').hidden=!a.installabile;$('#aggErr').hidden=true;$('#agg').hidden=false}
 $('#aggNo').onclick=()=>{$('#agg').hidden=true;try{localStorage.setItem('aggRimandato',$('#aggTitolo').textContent.split(' ').pop());localStorage.setItem('aggRimandatoT',Date.now())}catch(e){}};
 $('#aggSi').onclick=async()=>{
-  if(Object.values(S.attese||{}).some(a=>!a.finito&&!a.errore)&&!confirm('Ci sono generazioni in corso: se aggiorni adesso si interrompono. Aggiornare lo stesso?'))return;
+  if(Object.values(S.attese||{}).some(a=>!a.finito&&!a.errore)&&!confirm('Ci sono generazioni in corso: se aggiorni adesso si interrompono.\n\nAggiornare lo stesso?'))return;
   $('#aggSi').disabled=$('#aggNo').disabled=true;$('#aggErr').hidden=true;
   try{await api('/api/aggiorna',{})}catch(e){}
   const t=setInterval(async()=>{let s;try{s=await api('/api/aggiornamento?solo_stato=1')}catch(e){return}  // quando l'app si chiude non risponde più

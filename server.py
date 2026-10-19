@@ -472,12 +472,13 @@ def contenuto_progetto(nome):
             if s.get("file") and (cartella / s["file"]).exists():
                 totale += float(s.get("costo_usd", s.get("costo_stimato_usd")) or 0)
                 elementi.append(s)
-    return {"elementi": elementi, "totale_usd": round(totale, 2)}
+    return {"elementi": elementi, "totale_usd": round(totale, 2), **info_destinazione(nome)}
 
 
 # ---------- canvas (posizioni delle card, una per progetto) ----------
 
 CANVAS = "canvas.json"
+ALLA_LINGUA = None  # l'app per Mac la imposta per tradurre il menu nella barra
 
 
 def leggi_canvas(nome):
@@ -544,6 +545,83 @@ def sposta_nel_cestino(p):
         shutil.move(str(p), str(dest))
         return
     raise RuntimeError("Non riesco a spostare il progetto nel Cestino.")
+
+
+# ---------- cartella di salvataggio di ogni progetto (dove finiscono i file con "Scarica") ----------
+IMPOSTAZIONI = ".impostazioni"  # file nascosto dentro la cartella del progetto: segue rinomina ed eliminazione
+SCEGLI_CARTELLA = None  # l'app per Mac la imposta con la finestra nativa "Scegli cartella"
+
+
+def impostazioni(nome):
+    _, radice = config()
+    p = radice / nome_sicuro(nome) / IMPOSTAZIONI
+    try:
+        return json.loads(p.read_text(encoding="utf-8"))
+    except Exception:  # noqa: BLE001
+        return {}
+
+
+def salva_impostazioni(nome, imp):
+    _, radice = config()
+    cartella = radice / nome_sicuro(nome)
+    if not cartella.is_dir():
+        raise RuntimeError("Progetto non trovato.")
+    (cartella / IMPOSTAZIONI).write_text(json.dumps(imp, indent=2, ensure_ascii=False), encoding="utf-8")
+
+
+def info_destinazione(nome):
+    d = impostazioni(nome).get("destinazione")
+    if not d:
+        return {"destinazione": None}
+    casa = str(Path.home())
+    breve = "~" + d[len(casa):] if d == casa or d.startswith(casa + "/") else d
+    return {"destinazione": d, "destinazione_breve": breve, "destinazione_ok": Path(d).is_dir()}
+
+
+def scegli_cartella(titolo):
+    """Finestra del Mac per scegliere una cartella. None se annullata."""
+    if SCEGLI_CARTELLA:
+        return SCEGLI_CARTELLA(titolo)
+    if sys.platform == "darwin":
+        r = subprocess.run(["osascript", "-e", f"POSIX path of (choose folder with prompt {json.dumps(titolo)})"],
+                           capture_output=True, text=True)
+        return r.stdout.strip() or None if r.returncode == 0 else None
+    raise RuntimeError("Scegliere una cartella funziona solo sul Mac.")
+
+
+def _uguali(a, b):
+    if a.stat().st_size != b.stat().st_size:
+        return False
+    with a.open("rb") as fa, b.open("rb") as fb:
+        while True:
+            x, y = fa.read(1 << 20), fb.read(1 << 20)
+            if x != y:
+                return False
+            if not x:
+                return True
+
+
+def salva_in_destinazione(nome, file):
+    """Copia un file del progetto nella sua cartella di salvataggio, senza doppioni.
+    Se c'è già lo stesso file non lo ricopia; se c'è un file diverso con lo stesso nome usa "nome 2", "nome 3"…"""
+    d = impostazioni(nome).get("destinazione")
+    if not d:
+        return {"nessuna": True}
+    dest = Path(d)
+    if not dest.is_dir():
+        raise RuntimeError(f'La cartella di salvataggio "{dest.name}" non esiste più (spostata o cancellata?): sceglila di nuovo.')
+    _, radice = config()
+    src = radice / nome_sicuro(nome) / Path(file).name
+    if not src.is_file():
+        raise RuntimeError("File non trovato.")
+    i, t = 1, dest / src.name
+    while t.exists():
+        if t.is_file() and _uguali(src, t):
+            return {"stato": "gia", "nome": t.name, "cartella": str(dest)}
+        i += 1
+        t = dest / f"{src.stem} {i}{src.suffix}"
+    shutil.copy2(src, t)
+    return {"stato": "salvato", "nome": t.name, "cartella": str(dest)}
 
 
 def rinomina_progetto(vecchio, nuovo):
@@ -622,11 +700,17 @@ class Handler(BaseHTTPRequestHandler):
         q = urllib.parse.parse_qs(u.query)
         if u.path == "/":
             b = (APP / "index.html").read_bytes()
+            try:
+                lin = (DATI / "lingua.txt").read_text().strip()
+                if lin in ("it", "en"):
+                    b = b.replace(b'<html lang="it">', f'<html lang="{lin}" data-lingua="{lin}">'.encode(), 1)
+            except OSError:
+                pass
             self.send_response(200)
             self.send_header("Content-Type", "text/html; charset=utf-8")
             self.end_headers()
             self.wfile.write(b)
-        elif u.path in ("/canvas.js", "/canvas.css"):
+        elif u.path in ("/canvas.js", "/canvas.css", "/i18n.js"):
             b = (APP / u.path.lstrip("/")).read_bytes()
             self.send_response(200)
             self.send_header("Content-Type", ("application/javascript" if u.path.endswith(".js") else "text/css") + "; charset=utf-8")
@@ -715,6 +799,45 @@ class Handler(BaseHTTPRequestHandler):
                 self._json({"ok": True})
             elif u.path == "/api/rinomina-progetto":
                 self._json({"nome": rinomina_progetto(d.get("vecchio", ""), d.get("nuovo", ""))})
+            elif u.path == "/api/lingua":
+                lin = "en" if d.get("lingua") == "en" else "it"
+                try:
+                    f = DATI / "lingua.txt"
+                    if not f.exists() or f.read_text().strip() != lin:
+                        f.write_text(lin)
+                except OSError:
+                    pass
+                if ALLA_LINGUA:
+                    try:
+                        ALLA_LINGUA(lin)
+                    except Exception:  # noqa: BLE001
+                        pass
+                self._json({"ok": True})
+            elif u.path == "/api/destinazione":
+                nome = d.get("progetto", "")
+                imp = impostazioni(nome)
+                if d.get("azione") == "rimuovi":
+                    imp.pop("destinazione", None)
+                else:
+                    scelta = scegli_cartella(f'Dove salvare i file del progetto "{nome}"?')
+                    if not scelta:
+                        self._json({"annullato": True, **info_destinazione(nome)})
+                        return
+                    imp["destinazione"] = str(Path(scelta).expanduser())
+                salva_impostazioni(nome, imp)
+                self._json(info_destinazione(nome))
+            elif u.path == "/api/salva-in-destinazione":
+                self._json(salva_in_destinazione(d.get("progetto", ""), d.get("file", "")))
+            elif u.path == "/api/salva-tutto":
+                nome, esiti = d.get("progetto", ""), {"salvato": 0, "gia": 0}
+                for e in contenuto_progetto(nome)["elementi"]:
+                    esiti[salva_in_destinazione(nome, e["file"]).get("stato", "gia")] += 1
+                self._json(esiti)
+            elif u.path == "/api/mostra-nel-finder":
+                f = Path(d.get("percorso", ""))
+                if sys.platform == "darwin" and f.exists():
+                    subprocess.Popen(["open", "-R", str(f)])
+                self._json({"ok": True})
             elif u.path == "/api/elimina-progetto":
                 elimina_progetto(d.get("nome", ""))
                 self._json({"ok": True})

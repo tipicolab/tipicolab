@@ -5,7 +5,7 @@ from setuptools import setup
 
 VERSIONE = Path(__file__).with_name("VERSIONE").read_text(encoding="utf-8").strip()
 
-RISORSE = ["index.html", "canvas.js", "canvas.css", "models.json", "server.py", "openrouter.py", "aggiornamenti.py", "VERSIONE",
+RISORSE = ["index.html", "canvas.js", "canvas.css", "i18n.js", "models.json", "server.py", "openrouter.py", "aggiornamenti.py", "VERSIONE",
            "build_risorse/barra.png", "build_risorse/origine.txt"]
 
 OPZIONI = {

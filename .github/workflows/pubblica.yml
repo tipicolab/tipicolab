@@ -50,7 +50,7 @@ jobs:
           plutil -p "$APP/Contents/Info.plist" | grep ShortVersion
           unzip -l "_build-app/Fra-Tak-Studio.zip" | grep -q "Fra Tak Studio.app/Contents/MacOS/" || { echo "zip di compatibilità sbagliato"; exit 1; }
           unzip -l "_build-app/Tipico-Lab.zip" | grep -q "Tipico Lab.app/Contents/MacOS/" || { echo "zip sbagliato"; exit 1; }
-          for f in index.html canvas.js canvas.css server.py openrouter.py aggiornamenti.py VERSIONE models.json; do
+          for f in index.html canvas.js canvas.css i18n.js server.py openrouter.py aggiornamenti.py VERSIONE models.json; do
             test -f "$APP/Contents/Resources/$f" || { echo "manca $f"; exit 1; }
           done
           # nessuna chiave o dato personale dentro l'app

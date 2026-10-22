@@ -2,6 +2,9 @@
 
 Ogni versione pubblicata ha qui il suo paragrafo: è il testo che compare nell'avviso di aggiornamento.
 
+## 1.3.1
+- Canvas: in basso a sinistra, sopra la minimappa, vedi quanti file ha il progetto e quanto hai speso in totale.
+
 ## 1.3.0
 - Canvas nitida: quando ingrandisci, nodi e immagini vengono ridisegnati alla risoluzione giusta invece di restare sfocati.
 - Selezione come in Figma: clic sul vuoto e trascina per disegnare un rettangolo e selezionare più nodi

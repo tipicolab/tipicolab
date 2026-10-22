@@ -124,6 +124,8 @@ main.modo-canvas>aside,main.modo-canvas>section{display:none}
 .nb-ctrl{position:absolute;left:14px;bottom:14px;z-index:5;display:flex;flex-direction:column;gap:6px;align-items:flex-start}
 .nb-zoom{display:flex;align-items:center;gap:2px;background:#fff;border:1px solid var(--line);border-radius:var(--r-md);padding:4px;box-shadow:0 8px 24px rgba(0,0,0,.08)}
 .nb-zoom button{background:transparent;padding:6px 10px;font-size:13px;border-radius:8px}.nb-zoom button:hover{background:var(--chip)}
+.nb-spesa{background:#fff;border:1px solid var(--line);border-radius:var(--r-md);box-shadow:0 8px 24px rgba(0,0,0,.08);
+  padding:8px 12px;font-size:13px;font-weight:500;font-variant-numeric:tabular-nums;white-space:nowrap}
 #nbPerc{min-width:54px;text-align:center;font-size:13px;font-variant-numeric:tabular-nums}
 #nbMini{background:#fff;border:1px solid var(--line);border-radius:var(--r-md);box-shadow:0 8px 24px rgba(0,0,0,.08);cursor:pointer;display:block}
 

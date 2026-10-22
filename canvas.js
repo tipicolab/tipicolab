@@ -42,6 +42,7 @@ wrap.innerHTML=`
   <button id="nbTpl">Template ▾</button><button id="nbAssetBtn">Asset</button>
 </div>
 <div class="nb-ctrl">
+  <div class="nb-spesa" id="nbSpesa" hidden></div>
   <canvas id="nbMini" width="200" height="130" title="Minimappa: clicca o trascina per spostarti"></canvas>
   <div class="nb-zoom"><button id="nbMeno" title="Riduci">−</button><span id="nbPerc">100%</span><button id="nbPiu" title="Ingrandisci">+</button><button id="nbAdatta" title="Adatta alla vista (⌘0)">Adatta</button></div>
 </div>
@@ -737,7 +738,10 @@ async function apriProgetto(nome,d){
 window.cvLascia=async nome=>{if(salvaPend&&salvaPend.progetto===nome)await salvaOra();clearTimeout(salvaT);
   if(salvaPend&&salvaPend.progetto===nome)salvaPend=null;
   if(B&&B.progetto===nome){B=null;el.forEach(e=>e.remove());el.clear();sel.clear()}};
-window.cvAggiorna=(nome,d)=>{if(d)assets=d.elementi||[];if(attivo)apriProgetto(nome,d);else if(B&&B.progetto!==nome&&salvaPend)salvaOra()};
+/* spesa del progetto (la stessa della Griglia), in basso a sinistra sopra la minimappa */
+function disegnaSpesa(d){const s=$('#nbSpesa');if(!s||!d)return;const k=(d.elementi||[]).length;s.hidden=!k;
+  if(k)s.textContent=`${k} file · spesa totale $${Number(d.totale_usd||0).toFixed(2)}`}
+window.cvAggiorna=(nome,d)=>{if(d){assets=d.elementi||[];disegnaSpesa(d)}if(attivo)apriProgetto(nome,d);else if(B&&B.progetto!==nome&&salvaPend)salvaOra()};
 
 /* debug/test */
 window.__nb={get B(){return B},V,sel,corse,annulla,ripeti,collega:(a,b,p)=>{const r=collega(a,b,p);render();commit();return r},aggiungi:(t,x,y,e)=>{const n=aggiungi(t,x,y,e);render();commit();return n},

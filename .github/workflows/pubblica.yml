@@ -5,7 +5,7 @@ name: Pubblica una versione
 on:
   push:
     branches: [main]
-    paths: [VERSIONE]
+    paths: [VERSIONE, .github/workflows/pubblica.yml]
   workflow_dispatch:
 
 permissions:
@@ -13,7 +13,8 @@ permissions:
 
 jobs:
   app:
-    runs-on: macos-14
+    # Mac Intel: i Mac Apple di GitHub sono spesso esauriti. L'app esce comunque universale (Intel + Apple).
+    runs-on: macos-15-intel
     steps:
       - uses: actions/checkout@v4
 

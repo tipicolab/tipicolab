@@ -601,12 +601,39 @@ def _uguali(a, b):
                 return True
 
 
+def nome_download(progetto, file):
+    """Nome con cui un file esce dall'app: Tipico-Lab-<progetto>-GG-MM-AAAA-HH-MM(.ext)
+    (data e ora della generazione; "-2", "-3"… per le immagini successive della stessa generazione)."""
+    _, radice = config()
+    cartella = radice / nome_sicuro(progetto)
+    f = Path(file).name
+    quando = None
+    try:
+        quando = dt.datetime.fromisoformat(json.loads((cartella / (f + ".json")).read_text(encoding="utf-8"))["data"])
+    except Exception:  # noqa: BLE001
+        m = re.search(r"(\d{8})-(\d{6})", f)
+        if m:
+            try:
+                quando = dt.datetime.strptime(m.group(1) + m.group(2), "%Y%m%d%H%M%S")
+            except ValueError:
+                pass
+    if quando is None:
+        try:
+            quando = dt.datetime.fromtimestamp((cartella / f).stat().st_mtime)
+        except OSError:
+            quando = dt.datetime.now()
+    k = re.search(r"_(\d+)\.[^.]+$", f)
+    extra = f"-{k.group(1)}" if k and int(k.group(1)) > 1 and not f.startswith("_ref-") else ""
+    return f"Tipico-Lab-{nome_sicuro(progetto)}-{quando:%d-%m-%Y-%H-%M}{extra}{Path(f).suffix}"
+
+
 def salva_in_destinazione(nome, file):
     """Copia un file del progetto nella sua cartella di salvataggio, senza doppioni.
-    Se c'è già lo stesso file non lo ricopia; se c'è un file diverso con lo stesso nome usa "nome 2", "nome 3"…"""
+    Se nella cartella c'è già lo stesso file (anche con un altro nome) non lo ricopia; se il nome è già preso
+    da un file diverso aggiunge "-2", "-3"…"""
     d = impostazioni(nome).get("destinazione")
     if not d:
-        return {"nessuna": True}
+        return {"nessuna": True, "nome": nome_download(nome, file)}
     dest = Path(d)
     if not dest.is_dir():
         raise RuntimeError(f'La cartella di salvataggio "{dest.name}" non esiste più (spostata o cancellata?): sceglila di nuovo.')
@@ -614,12 +641,18 @@ def salva_in_destinazione(nome, file):
     src = radice / nome_sicuro(nome) / Path(file).name
     if not src.is_file():
         raise RuntimeError("File non trovato.")
-    i, t = 1, dest / src.name
+    dimensione = src.stat().st_size
+    for g in dest.iterdir():  # lo stesso file c'è già, magari con un altro nome?
+        try:
+            if g.is_file() and g.stat().st_size == dimensione and _uguali(src, g):
+                return {"stato": "gia", "nome": g.name, "cartella": str(dest)}
+        except OSError:
+            continue
+    base = Path(nome_download(nome, file))
+    i, t = 1, dest / base.name
     while t.exists():
-        if t.is_file() and _uguali(src, t):
-            return {"stato": "gia", "nome": t.name, "cartella": str(dest)}
         i += 1
-        t = dest / f"{src.stem} {i}{src.suffix}"
+        t = dest / f"{base.stem}-{i}{base.suffix}"
     shutil.copy2(src, t)
     return {"stato": "salvato", "nome": t.name, "cartella": str(dest)}
 
@@ -753,6 +786,9 @@ class Handler(BaseHTTPRequestHandler):
             self.send_response(200)
             self.send_header("Content-Type", mimetypes.guess_type(p.name)[0] or "application/octet-stream")
             self.send_header("Content-Length", str(p.stat().st_size))
+            if q.get("scarica"):
+                nd = nome_download(q["progetto"][0], p.name)
+                self.send_header("Content-Disposition", "attachment; filename*=UTF-8''" + urllib.parse.quote(nd))
             self.end_headers()
             with p.open("rb") as fh:
                 while chunk := fh.read(1 << 20):

@@ -2,6 +2,11 @@
 
 Ogni versione pubblicata ha qui il suo paragrafo: è il testo che compare nell'avviso di aggiornamento.
 
+## 1.4.0
+- I file scaricati hanno un nome chiaro: Tipico-Lab-<progetto>-giorno-mese-anno-ora-minuto
+  (es. Tipico-Lab-Shooting-22-10-2026-14-35.png; "-2", "-3"… se una generazione ne crea più di uno).
+- Nella cartella di salvataggio un file già presente non viene ricopiato, anche se lì ha un altro nome.
+
 ## 1.3.3
 - Zoom della Canvas fluido: mentre zoomi la board si muove veloce, appena ti fermi torna nitida.
 

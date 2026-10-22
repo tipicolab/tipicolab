@@ -536,10 +536,10 @@ const ICONA={scarica:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
 const ultimaCartella=p=>String(p||'').replace(/\/+$/,'').split('/').pop()||p;
 async function scaricaFile(nome,file){
   let r;try{r=await api('/api/salva-in-destinazione',{progetto:nome,file})}catch(e){alert(e.message);return}
-  if(r.nessuna){const a=document.createElement('a');a.href=`/file?progetto=${encodeURIComponent(nome)}&nome=${encodeURIComponent(file)}`;
-    a.download=file;document.body.appendChild(a);a.click();a.remove();return}
+  if(r.nessuna){const a=document.createElement('a');a.href=`/file?progetto=${encodeURIComponent(nome)}&nome=${encodeURIComponent(file)}&scarica=1`;
+    a.download=r.nome||file;document.body.appendChild(a);a.click();a.remove();return}
   const c=ultimaCartella(r.cartella);
-  avvisa(r.stato==='gia'?`Già salvato in "${c}"`:r.nome!==file?`Salvato in "${c}" come ${r.nome}`:`Salvato in "${c}"`)}
+  avvisa(r.stato==='gia'?`Già salvato in "${c}"`:`Salvato in "${c}" come ${r.nome}`)}
 function disegnaDest(){
   const nome=$('#progetto').value,d=(S.dest||{})[nome],riga=$('#destRiga');
   riga.classList.toggle('rotta',!!(d&&!d.ok));

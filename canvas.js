@@ -30,7 +30,7 @@ const url=f=>urlF(B.progetto,f);
 const wrap=$('#cvWrap');
 wrap.innerHTML=`
 <div id="nb" tabindex="-1">
-  <div id="nbMondo"><div id="nbFrame"></div><svg id="nbArchi"></svg><div id="nbNodi"></div><div id="nbGuide"></div></div>
+  <div id="nbMondo"><div id="nbScala"><div id="nbFrame"></div><svg id="nbArchi"></svg><div id="nbNodi"></div><div id="nbGuide"></div></div></div>
   <div id="nbMarquee"></div>
   <div class="nb-vuoto" id="nbVuoto" hidden><b>Canvas vuota</b>Aggiungi un nodo dalla barra in alto, fai doppio clic sulla board o trascina qui foto e video dal Finder.</div>
 </div>
@@ -50,7 +50,7 @@ wrap.innerHTML=`
   <p>Trascina un'immagine sulla board per creare un nodo Reference.</p><div class="lista" id="nbAssetLista"></div></div>
 <div class="nb-toast" id="nbToast"></div>
 <input type="file" id="nbFile" accept="image/*,video/*,audio/*" multiple hidden>`;
-const nb=$('#nb'),mondo=$('#nbMondo'),strFrame=$('#nbFrame'),svg=$('#nbArchi'),strNodi=$('#nbNodi'),strGuide=$('#nbGuide');
+const nb=$('#nb'),mondo=$('#nbMondo'),scala=$('#nbScala'),strFrame=$('#nbFrame'),svg=$('#nbArchi'),strNodi=$('#nbNodi'),strGuide=$('#nbGuide');
 let menuEl=null;
 
 /* ---------------- utilità ---------------- */
@@ -166,12 +166,10 @@ function annulla(){if(!pilaUndo.length)return;pilaRedo.push(ultimo);ripristina(p
 function ripeti(){if(!pilaRedo.length)return;pilaUndo.push(ultimo);ripristina(pilaRedo.pop())}
 
 /* ---------------- vista ---------------- */
-/* Durante zoom e spostamenti la board è un livello GPU (veloce); appena ti fermi torna normale e il browser la
-   ridisegna nitida alla scala attuale (altrimenti ingrandendo resta sfocata, come una foto allargata). */
-let nitidoT=null;
-function applica(){mondo.style.transform=`translate(${V.x}px,${V.y}px) scale(${V.z})`;
-  if(mondo.style.willChange!=='transform')mondo.style.willChange='transform';
-  clearTimeout(nitidoT);nitidoT=setTimeout(()=>{mondo.style.willChange='auto'},160);
+/* Lo spostamento è un translate; l'ingrandimento usa CSS "zoom" (non transform: scale), così testi, bordi e immagini
+   vengono impaginati e disegnati davvero alla dimensione a cui li vedi: sempre nitidi, anche a 300%.
+   (Con scale il motore di Safari disegna la board a 100% e poi la allarga come una foto: sfocata.) */
+function applica(){mondo.style.transform=`translate(${V.x}px,${V.y}px)`;if(scala.style.zoom!==String(V.z))scala.style.zoom=V.z;
   let g=GRID*V.z;while(g<12)g*=2;nb.style.backgroundSize=`${g}px ${g}px`;nb.style.backgroundPosition=`${V.x}px ${V.y}px`;
   $('#nbPerc').textContent=Math.round(V.z*100)+'%';disegnaMini();if(B)salva()}
 function zoomA(cx,cy,z){const r=nb.getBoundingClientRect();z=Math.min(3,Math.max(.1,z));
@@ -211,7 +209,7 @@ function creaNodo(n){
   const ti=e.querySelector('.nd-tag input');
   if(ti){ti.onkeydown=ev=>{if(ev.key==='Enter'){ev.preventDefault();ti.blur()}if(ev.key==='Escape'){ti.value=n.tag;ti.blur()}};
     ti.onblur=()=>{if(rinominaTag(n,ti.value))commit();ti.value=n.tag}}
-  e.querySelector('.nd-piu').onclick=ev=>{ev.stopPropagation();const r=ev.target.getBoundingClientRect();if(!sel.has(n.id)){sel.clear();sel.add(n.id);render()}menuNodo(n,r.left,r.bottom+4)};
+  e.querySelector('.nd-piu').onclick=ev=>{ev.stopPropagation();if(!sel.has(n.id)){sel.clear();sel.add(n.id);render()}menuNodo(n,ev.clientX-8,ev.clientY+12)};
   corpoNodo(n,e);strNodi.appendChild(e);
   new ResizeObserver(()=>pianificaArchi()).observe(e);
   return e}
@@ -324,7 +322,10 @@ async function stimaOra(n){{const m=modello(n.modello);if(!m){stime.set(n.id,nul
 
 /* ---------------- archi ---------------- */
 let archiRaf=0;function pianificaArchi(){if(archiRaf)return;archiRaf=requestAnimationFrame(()=>{archiRaf=0;disegnaArchi();disegnaMini()})}
-function centroPorta(e){const r=e.getBoundingClientRect();return aMondo(r.left+r.width/2,r.top+r.height/2)}
+/* centro di una porta in coordinate della board, dalle misure di impaginazione (non dipendono da zoom o animazioni) */
+function centroPorta(e){let x=e.offsetWidth/2,y=e.offsetHeight/2,c=e;
+  while(c&&c!==scala){x+=c.offsetLeft;y+=c.offsetTop;const p=c.offsetParent;if(p&&p!==scala){x+=p.clientLeft;y+=p.clientTop}c=p}
+  return {x,y}}
 function portaEl(id,p){const e=el.get(id);if(!e)return null;return p==='out'?e.querySelector('.porta.out'):e.querySelector(`.porta.in[data-porta="${p}"]`)}
 const curva=(a,b)=>{const d=Math.max(40,Math.abs(b.x-a.x)*.5);return `M${a.x},${a.y} C${a.x+d},${a.y} ${b.x-d},${b.y} ${b.x},${b.y}`};
 function disegnaArchi(){if(!B||!attivo)return;

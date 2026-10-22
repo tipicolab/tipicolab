@@ -2,6 +2,10 @@
 
 Ogni versione pubblicata ha qui il suo paragrafo: è il testo che compare nell'avviso di aggiornamento.
 
+## 1.3.2
+- Canvas davvero nitida quando ingrandisci: ora la board viene ridisegnata alla dimensione a cui la vedi
+  (prima veniva allargata come una foto e risultava sfocata).
+
 ## 1.3.1
 - Canvas: in basso a sinistra, sopra la minimappa, vedi quanti file ha il progetto e quanto hai speso in totale.
 

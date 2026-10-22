@@ -312,7 +312,7 @@ function corpoGen(n,c){
     n.params[p.nome]=p.tipo==='sino'?x.value==='true':x.value;aggiornaStima(n);commit()};x.onchange=h;if(x.tagName==='INPUT')x.oninput=()=>{n.params[x.dataset.p]=x.value;salva()}});
   c.querySelector('.nd-gen').onclick=()=>eseguiNodo(n);
   c.querySelectorAll('.nd-out [data-az]').forEach(b=>b.onclick=ev=>{ev.stopPropagation();const f=fileDi(n);
-    if(b.dataset.az==='scarica')scaricaFile(B.progetto,f);else usaRefDaNodo(n)});
+    if(b.dataset.az==='scarica')scegliScarica(B.progetto,f,ev);else usaRefDaNodo(n)});
   const px=c.querySelector('.ph-x');if(px)px.onclick=()=>{corse.delete(n.id);corpoNodo(n,el.get(n.id))};
   const v=c.querySelector('.nd-out video');if(v){v.onpointerenter=()=>v.play().catch(()=>{});v.onpointerleave=()=>v.pause()}
   c.querySelectorAll('.nd-strip .th').forEach(t=>t.addEventListener('pointerdown',ev=>trascinaRisultato(ev,n,+t.dataset.i)));
@@ -509,7 +509,8 @@ function menuNodo(n,x,y){const f=fileDi(n);const V_=[];
   if(n.tipo!=='frame'&&n.tipo!=='nota'){V_.push('-',{t:'Copia prompt',off:!testoPrompt(n),f:()=>{navigator.clipboard.writeText(testoPrompt(n));toast('Prompt copiato')}});
     V_.push({t:'Usa come reference',off:!(n.tipo==='gen'&&f),f:()=>usaRefDaNodo(n)});
     V_.push({t:'Apri file',off:!f,f:()=>api('/api/apri-cartella',{progetto:B.progetto,file:f}).catch(()=>{})},
-      {t:'Scarica',off:!f,f:()=>scaricaFile(B.progetto,f)})}
+      ...(window.destDi&&destDi(B.progetto)?[{t:`Salva in "${ultimaCartella(destDi(B.progetto).p)}"`,off:!f,f:()=>scaricaFile(B.progetto,f)},
+        {t:'Salva con nome…',off:!f,f:()=>scaricaFile(B.progetto,f,true)}]:[{t:'Scarica…',off:!f,f:()=>scaricaFile(B.progetto,f,true)}]))}
   mostraMenu(V_,x,y)}
 /* risultato di una generazione → nuovo nodo Reference accanto, pronto da collegare */
 function usaRefDaNodo(n){const f=fileDi(n);if(!f)return;const d=dimNodo(n);const p=postoLibero(n.x+d.w+80,n.y,LARGH.ref,260,[]);

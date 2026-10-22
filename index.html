@@ -534,12 +534,28 @@ const ICONA={scarica:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
   ref:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="14" height="14" rx="2.5"/><path d="m3 15 4-4 4 4 2-2 4 4"/><path d="M19 3v6M16 6h6"/></svg>'};
 /* Scarica: se il progetto ha una cartella di salvataggio il file va lì (senza doppioni), altrimenti si apre la finestra "Salva" del Mac */
 const ultimaCartella=p=>String(p||'').replace(/\/+$/,'').split('/').pop()||p;
-async function scaricaFile(nome,file){
-  let r;try{r=await api('/api/salva-in-destinazione',{progetto:nome,file})}catch(e){alert(e.message);return}
+async function scaricaFile(nome,file,chiedi){
+  let r;try{r=await api('/api/salva-in-destinazione',{progetto:nome,file,chiedi:!!chiedi})}catch(e){alert(e.message);return}
   if(r.nessuna){const a=document.createElement('a');a.href=`/file?progetto=${encodeURIComponent(nome)}&nome=${encodeURIComponent(file)}&scarica=1`;
     a.download=r.nome||file;document.body.appendChild(a);a.click();a.remove();return}
   const c=ultimaCartella(r.cartella);
   avvisa(r.stato==='gia'?`Già salvato in "${c}"`:`Salvato in "${c}" come ${r.nome}`)}
+/* Icona "Scarica": con una cartella di salvataggio chiede se salvarlo lì o altrove ("Salva con nome…": finestra del Mac,
+   è una copia, il file nella cartella di salvataggio resta dov'è); senza cartella apre subito la finestra del Mac. */
+let menuScarica=null;
+function chiudiMenuScarica(){if(menuScarica){menuScarica.remove();menuScarica=null}}
+function scegliScarica(nome,file,ev){const d=(S.dest||{})[nome];
+  if(!d){scaricaFile(nome,file,true);return}
+  chiudiMenuScarica();const m=document.createElement('div');m.className='nb-menu';menuScarica=m;
+  m.innerHTML=`<button data-s="dest"></button><button data-s="chiedi"></button>`;
+  m.querySelector('[data-s="dest"]').textContent=`Salva in "${ultimaCartella(d.p)}"`;
+  m.querySelector('[data-s="chiedi"]').textContent='Salva con nome…';
+  document.body.appendChild(m);const q=m.getBoundingClientRect(),x=ev?ev.clientX:innerWidth/2,y=ev?ev.clientY+10:innerHeight/2;
+  m.style.left=Math.max(8,Math.min(x-q.width+20,innerWidth-q.width-8))+'px';m.style.top=Math.max(8,Math.min(y,innerHeight-q.height-8))+'px';
+  m.querySelectorAll('button').forEach(b=>b.onclick=e=>{e.stopPropagation();chiudiMenuScarica();scaricaFile(nome,file,b.dataset.s==='chiedi')})}
+addEventListener('pointerdown',e=>{if(menuScarica&&!menuScarica.contains(e.target))chiudiMenuScarica()},true);
+addEventListener('keydown',e=>{if(e.key==='Escape')chiudiMenuScarica()});
+window.scegliScarica=scegliScarica;window.destDi=nome=>(S.dest||{})[nome]||null;
 function disegnaDest(){
   const nome=$('#progetto').value,d=(S.dest||{})[nome],riga=$('#destRiga');
   riga.classList.toggle('rotta',!!(d&&!d.ok));
@@ -570,10 +586,14 @@ function apri(nome,e){const src=`/file?progetto=${encodeURIComponent(nome)}&nome
   const refs=(e.reference||[]).length?`\nReference: ${e.reference.join(', ')}`:'';
   $('#vistaTesto').innerHTML=`<b>${esc(e.modello)}</b> · ${esc(e.data)} · ${e.costo_reale?'costo reale ':'stimato ~'}${usd(e.costo_usd??e.costo_stimato_usd)}\n${esc(JSON.stringify(e.parametri))}${e.seed!=null?'  seed '+esc(e.seed):''}${esc(refs)}\n\n${promptHtml(e.prompt)}`;
   const vid=/\.(mp4|mov|webm)$/i.test(e.file);
-  $('#vistaAzioni').innerHTML=`<button class="btn-dark" data-v="scarica">${ICONA.scarica}Scarica</button>`+(vid?'':`<button data-v="ref">${ICONA.ref}Usa come reference</button>`)+
+  const dv=(S.dest||{})[nome];
+  $('#vistaAzioni').innerHTML=(dv?`<button class="btn-dark" data-v="scarica">${ICONA.scarica}<span></span></button><button data-v="chiedi">Salva con nome…</button>`
+    :`<button class="btn-dark" data-v="chiedi">${ICONA.scarica}Scarica…</button>`)+(vid?'':`<button data-v="ref">${ICONA.ref}Usa come reference</button>`)+
     (e.prompt?`<button data-v="riusa">Riusa prompt</button>`:'');
+  if(dv)$('#vistaAzioni [data-v="scarica"] span').textContent=`Salva in "${ultimaCartella(dv.p)}"`;
   $('#vistaAzioni').querySelectorAll('button').forEach(b=>b.onclick=()=>{const v=b.dataset.v;
     if(v==='scarica')scaricaFile(nome,e.file);
+    if(v==='chiedi')scaricaFile(nome,e.file,true);
     if(v==='ref'){$('#vista').close();usaComeRefDaFile(nome,e.file)}
     if(v==='riusa'){$('#vista').close();$('#prompt').value=e.prompt;evidenzia();$('#prompt').focus()}});
   $('#vista').showModal()}
@@ -738,7 +758,7 @@ function creaCard(nome,e){
   else if(md.complete&&md.naturalWidth)pronto();else md.onload=pronto;
   md.onclick=()=>apri(nome,n._e);
   n.querySelectorAll('[data-az]').forEach(b=>b.onclick=ev=>{ev.stopPropagation();
-    if(b.dataset.az==='scarica')scaricaFile(nome,e.file);else usaComeRefDaFile(nome,e.file)});
+    if(b.dataset.az==='scarica')scegliScarica(nome,e.file,ev);else usaComeRefDaFile(nome,e.file)});
   n.querySelector('.info button').onclick=()=>{$('#prompt').value=n._e.prompt;evidenzia();$('#prompt').focus()};
   return n}
 function creaPh(){

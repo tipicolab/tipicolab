@@ -627,12 +627,12 @@ def nome_download(progetto, file):
     return f"Tipico-Lab-{nome_sicuro(progetto)}-{quando:%d-%m-%Y-%H-%M}{extra}{Path(f).suffix}"
 
 
-def salva_in_destinazione(nome, file):
+def salva_in_destinazione(nome, file, chiedi=False):
     """Copia un file del progetto nella sua cartella di salvataggio, senza doppioni.
     Se nella cartella c'è già lo stesso file (anche con un altro nome) non lo ricopia; se il nome è già preso
     da un file diverso aggiunge "-2", "-3"…"""
-    d = impostazioni(nome).get("destinazione")
-    if not d:
+    d = None if chiedi else impostazioni(nome).get("destinazione")
+    if not d:  # nessuna cartella (o "Salva con nome…"): l'app apre la finestra "Salva" del Mac con questo nome
         return {"nessuna": True, "nome": nome_download(nome, file)}
     dest = Path(d)
     if not dest.is_dir():
@@ -863,7 +863,7 @@ class Handler(BaseHTTPRequestHandler):
                 salva_impostazioni(nome, imp)
                 self._json(info_destinazione(nome))
             elif u.path == "/api/salva-in-destinazione":
-                self._json(salva_in_destinazione(d.get("progetto", ""), d.get("file", "")))
+                self._json(salva_in_destinazione(d.get("progetto", ""), d.get("file", ""), bool(d.get("chiedi"))))
             elif u.path == "/api/salva-tutto":
                 nome, esiti = d.get("progetto", ""), {"salvato": 0, "gia": 0}
                 for e in contenuto_progetto(nome)["elementi"]:

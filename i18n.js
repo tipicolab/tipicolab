@@ -12,7 +12,7 @@ const EX={
 'Salva tutti i file nella cartella':'Save all files to the folder','Non usare più questa cartella':'Stop using this folder',
 'I download vanno in:':'Downloads go to:','I download chiedono ogni volta dove salvare.':'Downloads ask every time where to save.',
 'Download in':'Downloads in','Cartella non trovata:':'Folder not found:','Scegli dove salvare i download':'Choose where to save downloads',
-'I download chiederanno ogni volta dove salvare':'Downloads will ask every time where to save','Scarica':'Download',
+'I download chiederanno ogni volta dove salvare':'Downloads will ask every time where to save','Scarica':'Download','Salva con nome…':'Save as…',
 'Scegliere una cartella funziona solo sul Mac.':'Choosing a folder only works on the Mac.','File non trovato.':'File not found.',
 // aggiornamenti
 'Aggiorna e riavvia':'Update and restart','Più tardi':'Later','Inizio…':'Starting…','Scarico l\'aggiornamento…':'Downloading the update…',
@@ -103,6 +103,7 @@ const PAT=[
 [/^Scarico l'aggiornamento… (\d+)%$/,(m,n)=>`Downloading the update… ${n}%`],
 [/^Non ho il permesso di sostituire l'app in (.+)\.$/,(m,p)=>`I don't have permission to replace the app in ${p}.`],
 [/^Salvato in "(.*)" come (.+)$/,(m,c,n)=>`Saved to "${c}" as ${n}`],[/^Salvato in "(.*)"$/,(m,c)=>`Saved to "${c}"`],
+[/^Salva in "(.*)"$/,(m,c)=>`Save to "${c}"`],
 [/^Già salvato in "(.*)"$/,(m,c)=>`Already saved in "${c}"`],
 [/^(\d+) file salvati in "(.*)"( · (\d+) c'erano già)?$/,(m,n,c,x,g)=>`${n} file${n==='1'?'':'s'} saved to "${c}"${g?` · ${g} already there`:''}`],
 [/^Tutti i file sono già in "(.*)"$/,(m,c)=>`All files are already in "${c}"`],

@@ -2,6 +2,11 @@
 
 Ogni versione pubblicata ha qui il suo paragrafo: è il testo che compare nell'avviso di aggiornamento.
 
+## 1.4.1
+- "Salva con nome…": anche con una cartella di salvataggio impostata puoi salvare una copia dove vuoi.
+  L'icona Scarica ora chiede: "Salva in <cartella>" oppure "Salva con nome…" (si apre la finestra del Mac).
+  Nell'anteprima e nel menu dei nodi della Canvas ci sono gli stessi due pulsanti.
+
 ## 1.4.0
 - I file scaricati hanno un nome chiaro: Tipico-Lab-<progetto>-giorno-mese-anno-ora-minuto
   (es. Tipico-Lab-Shooting-22-10-2026-14-35.png; "-2", "-3"… se una generazione ne crea più di uno).

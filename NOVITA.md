@@ -2,6 +2,9 @@
 
 Ogni versione pubblicata ha qui il suo paragrafo: è il testo che compare nell'avviso di aggiornamento.
 
+## 1.3.3
+- Zoom della Canvas fluido: mentre zoomi la board si muove veloce, appena ti fermi torna nitida.
+
 ## 1.3.2
 - Canvas davvero nitida quando ingrandisci: ora la board viene ridisegnata alla dimensione a cui la vedi
   (prima veniva allargata come una foto e risultava sfocata).

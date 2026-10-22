@@ -166,12 +166,21 @@ function annulla(){if(!pilaUndo.length)return;pilaRedo.push(ultimo);ripristina(p
 function ripeti(){if(!pilaRedo.length)return;pilaUndo.push(ultimo);ripristina(pilaRedo.pop())}
 
 /* ---------------- vista ---------------- */
-/* Lo spostamento è un translate; l'ingrandimento usa CSS "zoom" (non transform: scale), così testi, bordi e immagini
-   vengono impaginati e disegnati davvero alla dimensione a cui li vedi: sempre nitidi, anche a 300%.
-   (Con scale il motore di Safari disegna la board a 100% e poi la allarga come una foto: sfocata.) */
-function applica(){mondo.style.transform=`translate(${V.x}px,${V.y}px)`;if(scala.style.zoom!==String(V.z))scala.style.zoom=V.z;
+/* Zoom fluido e nitido insieme:
+   - mentre zoomi o sposti, la board è un livello GPU che si muove/ingrandisce con transform (veloce, nessun ricalcolo)
+   - appena ti fermi (~0,15 s) l'ingrandimento passa a CSS "zoom": il Mac ridisegna tutto alla dimensione reale, nitido
+   Z0 = ingrandimento già "impaginato" con zoom; durante il gesto il transform aggiunge solo la differenza V.z/Z0. */
+let Z0=1,fissaT=null,miniRaf=0;
+function applica(){const k=V.z/Z0;
+  mondo.style.transform=k===1?`translate(${V.x}px,${V.y}px)`:`translate(${V.x}px,${V.y}px) scale(${k})`;
+  if(mondo.style.willChange!=='transform')mondo.style.willChange='transform';
+  clearTimeout(fissaT);fissaT=setTimeout(fissaZoom,150);
   let g=GRID*V.z;while(g<12)g*=2;nb.style.backgroundSize=`${g}px ${g}px`;nb.style.backgroundPosition=`${V.x}px ${V.y}px`;
-  $('#nbPerc').textContent=Math.round(V.z*100)+'%';disegnaMini();if(B)salva()}
+  $('#nbPerc').textContent=Math.round(V.z*100)+'%';
+  if(!miniRaf)miniRaf=requestAnimationFrame(()=>{miniRaf=0;disegnaMini()});if(B)salva()}
+function fissaZoom(){if(az&&az.tipo==='pan'){fissaT=setTimeout(fissaZoom,150);return}
+  if(Z0!==V.z){Z0=V.z;scala.style.zoom=Z0}
+  mondo.style.transform=`translate(${V.x}px,${V.y}px)`;mondo.style.willChange='auto'}
 function zoomA(cx,cy,z){const r=nb.getBoundingClientRect();z=Math.min(3,Math.max(.1,z));
   const p=aMondo(cx,cy);V.z=z;V.x=cx-r.left-p.x*z;V.y=cy-r.top-p.y*z;applica()}
 function zoomCentro(z){const r=nb.getBoundingClientRect();zoomA(r.left+r.width/2,r.top+r.height/2,z)}

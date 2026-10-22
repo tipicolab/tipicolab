@@ -10,7 +10,7 @@ main.modo-canvas>aside,main.modo-canvas>section{display:none}
   background-size:24px 24px;touch-action:none;outline:none;user-select:none;-webkit-user-select:none;overflow:hidden}
 #nb.pan,#nb.pan *{cursor:grab!important}#nb.panning,#nb.panning *{cursor:grabbing!important}
 #nb.collega,#nb.collega *{cursor:crosshair!important}
-#nbMondo{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform}
+#nbMondo{position:absolute;left:0;top:0;transform-origin:0 0}
 #nbFrame,#nbNodi,#nbGuide{position:absolute;left:0;top:0}
 #nbArchi{position:absolute;left:0;top:0;width:1px;height:1px;overflow:visible;pointer-events:none}
 #nbArchi path{fill:none;stroke-linecap:round}

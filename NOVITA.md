@@ -2,6 +2,12 @@
 
 Ogni versione pubblicata ha qui il suo paragrafo: è il testo che compare nell'avviso di aggiornamento.
 
+## 1.3.0
+- Canvas nitida: quando ingrandisci, nodi e immagini vengono ridisegnati alla risoluzione giusta invece di restare sfocati.
+- Selezione come in Figma: clic sul vuoto e trascina per disegnare un rettangolo e selezionare più nodi
+  (basta toccarli; un gruppo solo se è tutto dentro). Con ⇧ aggiungi alla selezione, vicino al bordo la board scorre da sola.
+- Per spostare la board: barra spaziatrice + trascina, tasto centrale del mouse o due dita sul trackpad.
+
 ## 1.2.0
 - Inglese: scegli la lingua dal menu in alto a destra (Italiano / English).
 - Cartella di salvataggio per ogni progetto: da "Modifica" scegli dove vanno i download. "Scarica" salva lì

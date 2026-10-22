@@ -165,7 +165,12 @@ function annulla(){if(!pilaUndo.length)return;pilaRedo.push(ultimo);ripristina(p
 function ripeti(){if(!pilaRedo.length)return;pilaUndo.push(ultimo);ripristina(pilaRedo.pop())}
 
 /* ---------------- vista ---------------- */
+/* Durante zoom e spostamenti la board è un livello GPU (veloce); appena ti fermi torna normale e il browser la
+   ridisegna nitida alla scala attuale (altrimenti ingrandendo resta sfocata, come una foto allargata). */
+let nitidoT=null;
 function applica(){mondo.style.transform=`translate(${V.x}px,${V.y}px) scale(${V.z})`;
+  if(mondo.style.willChange!=='transform')mondo.style.willChange='transform';
+  clearTimeout(nitidoT);nitidoT=setTimeout(()=>{mondo.style.willChange='auto'},160);
   let g=GRID*V.z;while(g<12)g*=2;nb.style.backgroundSize=`${g}px ${g}px`;nb.style.backgroundPosition=`${V.x}px ${V.y}px`;
   $('#nbPerc').textContent=Math.round(V.z*100)+'%';disegnaMini();if(B)salva()}
 function zoomA(cx,cy,z){const r=nb.getBoundingClientRect();z=Math.min(3,Math.max(.1,z));
@@ -549,18 +554,45 @@ nb.addEventListener('pointerdown',ev=>{if(!B)return;chiudiMenu();mouse={x:ev.cli
       bb:limiti(muovi.filter(n=>sel.has(n.id))),altri:B.nodi.filter(n=>!muovi.includes(n)&&n.tipo!=='frame').map(rett),pid:ev.pointerId};
     return}
   if(pan||ev.button===0)iniziaVuoto(ev,pan)});
+/* Clic sul vuoto e trascina: rettangolo di selezione, come in Figma.
+   - seleziona i nodi che il rettangolo tocca; un gruppo solo se è tutto dentro
+   - con ⇧ aggiunge alla selezione che c'era; un clic senza trascinare deseleziona
+   - vicino al bordo la board scorre da sola
+   Spazio + trascina (o tasto centrale del mouse) sposta la board; due dita sul trackpad la spostano sempre. */
 function iniziaVuoto(ev,pan){ev.preventDefault();nb.focus({preventScroll:true});
-  if(ev.shiftKey&&!pan){const p=aMondo(ev.clientX,ev.clientY);az={tipo:'lazo',p0:p,sx:ev.clientX,sy:ev.clientY};nb.setPointerCapture(ev.pointerId);return}
+  if(!pan){const p=aMondo(ev.clientX,ev.clientY);
+    az={tipo:'lazo',p0:p,p1:null,cx:ev.clientX,cy:ev.clientY,base:ev.shiftKey?new Set(sel):new Set(),mosso:false};
+    if(!ev.shiftKey&&(sel.size||selArco)){sel.clear();selArco=null;segnaSel()}
+    nb.setPointerCapture(ev.pointerId);return}
   az={tipo:'pan',sx:ev.clientX,sy:ev.clientY,x0:V.x,y0:V.y,mosso:false};nb.setPointerCapture(ev.pointerId);nb.classList.add('panning')}
+/* aggiorna solo l'evidenziazione (più leggero di render) */
+function segnaSel(){for(const [id,e] of el)e.classList.toggle('sel',sel.has(id));disegnaArchi();aggiornaBarra();disegnaMini()}
+function aggiornaLazo(){const a=az;if(!a||a.tipo!=='lazo')return;const r=nb.getBoundingClientRect();
+  const p1=aMondo(a.cx,a.cy);a.p1=p1;
+  const x0=Math.min(a.p0.x,p1.x),y0=Math.min(a.p0.y,p1.y),x1=Math.max(a.p0.x,p1.x),y1=Math.max(a.p0.y,p1.y);
+  const m=$('#nbMarquee');m.style.display='block';
+  m.style.left=x0*V.z+V.x+'px';m.style.top=y0*V.z+V.y+'px';m.style.width=(x1-x0)*V.z+'px';m.style.height=(y1-y0)*V.z+'px';
+  const nuovo=new Set(a.base);
+  for(const n of B.nodi){const q=rett(n);
+    const tocca=q.x<x1&&q.x+q.w>x0&&q.y<y1&&q.y+q.h>y0,dentro=q.x>=x0&&q.x+q.w<=x1&&q.y>=y0&&q.y+q.h<=y1;
+    if(n.tipo==='frame'?dentro:tocca)nuovo.add(n.id)}
+  if(nuovo.size!==sel.size||[...nuovo].some(id=>!sel.has(id))){sel.clear();nuovo.forEach(id=>sel.add(id));segnaSel()}}
+/* scorrimento automatico quando il rettangolo arriva al bordo */
+function scorriLazo(){const a=az;if(!a||a.tipo!=='lazo')return;const r=nb.getBoundingClientRect(),M=36,vel=18;
+  const vx=a.cx<r.left+M?vel*(1-(a.cx-r.left)/M):a.cx>r.right-M?-vel*(1-(r.right-a.cx)/M):0;
+  const vy=a.cy<r.top+M?vel*(1-(a.cy-r.top)/M):a.cy>r.bottom-M?-vel*(1-(r.bottom-a.cy)/M):0;
+  if(vx||vy){V.x+=Math.max(-vel,Math.min(vel,vx));V.y+=Math.max(-vel,Math.min(vel,vy));applica();aggiornaLazo()}
+  a.raf=requestAnimationFrame(scorriLazo)}
 nb.addEventListener('pointermove',ev=>{mouse={x:ev.clientX,y:ev.clientY};if(!az)return;
-  const dx=ev.clientX-az.sx,dy=ev.clientY-az.sy;
+  const dx=ev.clientX-(az.sx??0),dy=ev.clientY-(az.sy??0);
   if(az.tipo==='pan'){if(Math.hypot(dx,dy)>3)az.mosso=true;V.x=az.x0+dx;V.y=az.y0+dy;applica();return}
   if(az.tipo==='filo'){const p=aMondo(ev.clientX,ev.clientY);const tmp=svg.querySelector('.temp');tmp.setAttribute('d',curva(az.p0,p));
     const pi=sotto(ev.clientX,ev.clientY,'.porta.in');tmp.classList.toggle('ok',!!(pi&&pi.classList.contains('ok')));return}
   if(az.tipo==='resize'){az.f.w=Math.max(200,Math.round(az.w0+dx/V.z));az.f.h=Math.max(140,Math.round(az.h0+dy/V.z));render();return}
-  if(az.tipo==='lazo'){const p=aMondo(ev.clientX,ev.clientY);const m=$('#nbMarquee'),r=nb.getBoundingClientRect();
-    m.style.display='block';m.style.left=Math.min(az.sx,ev.clientX)-r.left+'px';m.style.top=Math.min(az.sy,ev.clientY)-r.top+'px';
-    m.style.width=Math.abs(dx)+'px';m.style.height=Math.abs(dy)+'px';az.p1=p;return}
+  if(az.tipo==='lazo'){az.cx=ev.clientX;az.cy=ev.clientY;
+    if(!az.mosso){if(Math.hypot(ev.clientX-(az.p0.x*V.z+V.x+nb.getBoundingClientRect().left),ev.clientY-(az.p0.y*V.z+V.y+nb.getBoundingClientRect().top))<3)return;
+      az.mosso=true;az.raf=requestAnimationFrame(scorriLazo)}
+    aggiornaLazo();return}
   if(az.tipo==='nodi'){if(!az.mosso&&Math.hypot(dx,dy)<4)return;
     if(!az.mosso){az.mosso=true;try{nb.setPointerCapture(az.pid)}catch(e){}az.orig.forEach(o=>el.get(o.n.id)?.classList.add('trascina'))}
     let mx=dx/V.z,my=dy/V.z;const bb=az.bb;const guide=[];
@@ -579,8 +611,7 @@ function disegnaGuide(g,bb){strGuide.innerHTML=g.map(x=>{const o=x.o;
 function fine(ev){if(!az)return;const a=az;az=null;nb.classList.remove('panning','collega');strGuide.innerHTML='';
   if(a.tipo==='pan'){if(!a.mosso&&(sel.size||selArco)){sel.clear();selArco=null;render()}return}
   if(a.tipo==='resize'){commit();return}
-  if(a.tipo==='lazo'){$('#nbMarquee').style.display='none';if(a.p1){const x0=Math.min(a.p0.x,a.p1.x),y0=Math.min(a.p0.y,a.p1.y),x1=Math.max(a.p0.x,a.p1.x),y1=Math.max(a.p0.y,a.p1.y);
-      B.nodi.forEach(n=>{const r=rett(n);if(r.x<x1&&r.x+r.w>x0&&r.y<y1&&r.y+r.h>y0)sel.add(n.id)});render()}return}
+  if(a.tipo==='lazo'){cancelAnimationFrame(a.raf);$('#nbMarquee').style.display='none';render();return}
   if(a.tipo==='nodi'){a.orig.forEach(o=>el.get(o.n.id)?.classList.remove('trascina'));if(a.mosso){disegnaArchi();commit()}return}
   if(a.tipo==='filo'){const tmp=svg.querySelector('.temp');$$('.porta.ok').forEach(x=>x.classList.remove('ok'));
     const pi=sotto(ev.clientX,ev.clientY,'.porta.in');const ne=sotto(ev.clientX,ev.clientY,'.nd');

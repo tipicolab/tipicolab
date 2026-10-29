@@ -2,6 +2,11 @@
 
 Ogni versione pubblicata ha qui il suo paragrafo: è il testo che compare nell'avviso di aggiornamento.
 
+## 1.4.5
+- Reference più leggere: prima di inviarle l'app le riduce a 1536 px di lato (JPEG, o PNG se hanno trasparenza).
+  Risolve l'errore 429 "could not verify available credits" di Nano Banana Pro con le foto di reference,
+  e rende l'invio più veloce con tutti i modelli.
+
 ## 1.4.4
 - Errore 429 di OpenRouter ("could not verify available credits… Retry shortly"): ora l'app riprova da sola
   fino a 5 volte nel giro di circa un minuto, prima di mostrare l'errore. I tentativi rifiutati non costano nulla.

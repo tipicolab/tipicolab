@@ -356,16 +356,37 @@ def stima(m, params):
 
 # ---------- immagini di riferimento ----------
 
+LATO_MAX_REF = 1536  # lato lungo massimo delle reference inviate ai modelli
+
+
 def _data_url(dati, tipo):
-    """Riduce le immagini molto pesanti (sips, solo Mac) e restituisce un data URL."""
-    if len(dati) > 3_000_000 and sys.platform == "darwin" and shutil.which("sips"):
-        with tempfile.TemporaryDirectory() as d:
-            src, dst = Path(d) / "in", Path(d) / "out.jpg"
-            src.write_bytes(dati)
-            r = subprocess.run(["sips", "-Z", "2048", "-s", "format", "jpeg", str(src), "--out", str(dst)],
-                               capture_output=True)
-            if r.returncode == 0 and dst.exists():
-                dati, tipo = dst.read_bytes(), "image/jpeg"
+    """Prepara una reference per OpenRouter e restituisce un data URL.
+    Sul Mac (sips) la riduce a max 1536 px di lato e la ricomprime (JPEG, o PNG se ha trasparenza):
+    con foto grandi alcuni modelli (es. Nano Banana Pro, che fa pagare anche le immagini in ingresso) non
+    riuscivano a stimare il costo in tempo e OpenRouter rispondeva 429 "could not verify available credits"."""
+    if sys.platform == "darwin" and shutil.which("sips"):
+        try:
+            with tempfile.TemporaryDirectory() as d:
+                src = Path(d) / "in"
+                src.write_bytes(dati)
+                info = subprocess.run(["sips", "-g", "pixelWidth", "-g", "pixelHeight", "-g", "hasAlpha", str(src)],
+                                      capture_output=True, text=True, timeout=30).stdout
+                val = dict(re.findall(r"(pixelWidth|pixelHeight|hasAlpha):\s*(\S+)", info))
+                w, h = int(val.get("pixelWidth", 0)), int(val.get("pixelHeight", 0))
+                alfa = val.get("hasAlpha", "no") == "yes"
+                if max(w, h) > LATO_MAX_REF or len(dati) > 1_200_000 or tipo not in ("image/jpeg", "image/png"):
+                    fmt, est, mime = ("png", "png", "image/png") if alfa else ("jpeg", "jpg", "image/jpeg")
+                    dst = Path(d) / f"out.{est}"
+                    cmd = ["sips", "-s", "format", fmt]
+                    if fmt == "jpeg":
+                        cmd += ["-s", "formatOptions", "88"]
+                    if max(w, h) > LATO_MAX_REF or not w:
+                        cmd += ["-Z", str(LATO_MAX_REF)]
+                    r = subprocess.run(cmd + [str(src), "--out", str(dst)], capture_output=True, timeout=60)
+                    if r.returncode == 0 and dst.exists() and dst.stat().st_size > 0:
+                        dati, tipo = dst.read_bytes(), mime
+        except Exception:  # noqa: BLE001  (se sips non riesce, si manda l'originale)
+            pass
     return f"data:{tipo};base64," + base64.b64encode(dati).decode()
 
 

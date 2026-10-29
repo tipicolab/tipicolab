@@ -275,7 +275,7 @@ function corpoRef(n,c){
   const pe=el.get(n.id);if(pe){const o=pe.querySelector('.porta.out');if(o)o.dataset.tipo=tipoUscita(n)}}
 
 /* -------- nodo Generazione -------- */
-function opzioniModelli(sc){const g=[['Immagini',m=>m.tipo==='immagine'&&!m.aggiunto],['Video',m=>m.tipo!=='immagine'&&!m.aggiunto],['Aggiunti da te',m=>m.aggiunto]];
+function opzioniModelli(sc){const g=window.GRUPPI_MODELLI;
   return g.map(([t,f])=>{const l=S.modelli.filter(f);return l.length?`<optgroup label="${t}">${l.map(m=>`<option value="${m.id}" ${m.id===sc?'selected':''}>${esc(m.nome)}</option>`).join('')}</optgroup>`:''}).join('')}
 function valoriDefault(m){const v={};(m?m.parametri:[]).forEach(p=>{v[p.nome]=p.tipo==='sino'?!!p.default:(p.default??'')});return v}
 function normalizza(m,vals){const out={};for(const p of m.parametri){let v=vals[p.nome];if(v===undefined)v=p.tipo==='sino'?!!p.default:p.default;
@@ -526,7 +526,7 @@ function menuCreaCollegato(da,x,y){const t=tipoUscita(nodo(da));const p=aMondo(x
     if(pp)collega(da,n.id,pp);sel.clear();sel.add(n.id);render();corpoNodo(n,el.get(n.id));disegnaArchi();commit()};
   if(t==='testo')voci.push({t:'Generazione immagine',f:nuovaGen('image',false)},{t:'Generazione video',f:nuovaGen('video',false)});
   if(t==='image')voci.push({t:'Generazione con reference',f:nuovaGen('image',true)},{t:'Video dal primo frame',f:nuovaGen('video',true)});
-  if(t==='video'){const up=S.modelli.find(m=>m.video_sorgente);if(up)voci.push({t:'Upscale video',f:()=>{const n=aggiungi('gen',p.x,p.y-60,{modello:up.id});render();collega(da,n.id,'video');render();commit()}})}
+  if(t==='video'){const up=S.modelli.find(m=>m.upscale)||S.modelli.find(m=>m.video_sorgente);if(up)voci.push({t:'Upscale video',f:()=>{const n=aggiungi('gen',p.x,p.y-60,{modello:up.id});render();collega(da,n.id,'video');render();commit()}})}
   voci.push('-',{t:'Nota',f:()=>{const n=aggiungi('nota',p.x,p.y-40);render();commit()}});
   mostraMenu(voci,x,y)}
 

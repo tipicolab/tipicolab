@@ -215,13 +215,29 @@ def _modello_upscale(x):
     return {"id": _slug(x["id"]), "nome": x.get("name") or x["id"], "tipo": "video", "fornitore": "openrouter",
             "or_id": x["id"], "endpoint": x["id"], "prompt": True, "prompt_opzionale": True,
             "parametri": [p for p in par if p], "reference": None,
-            "video_sorgente": {"etichetta": "Video da upscalare (obbligatorio)"},
+            "video_sorgente": {"etichetta": "Video da upscalare (obbligatorio)"}, "upscale": True, "gruppo": "upscale",
             "prezzo": {"per": "or_upscale", "skus": x.get("pricing_skus") or {}}}
+
+
+def _modello_modifica_video(x):
+    """Modelli che modificano un video esistente (es. FLUX Video Edit, Runway Aleph): video + istruzioni."""
+    par = []
+    if x.get("supported_aspect_ratios"):
+        par.append(_scelta("aspect_ratio", "Formato", x["supported_aspect_ratios"], ["16:9", "9:16"]))
+    return {"id": _slug(x["id"]), "nome": x.get("name") or x["id"], "tipo": "video", "fornitore": "openrouter",
+            "or_id": x["id"], "endpoint": x["id"], "prompt": True, "parametri": [p for p in par if p], "reference": None,
+            "video_sorgente": {"etichetta": "Video da modificare (obbligatorio)"}, "modifica_video": True,
+            "gruppo": "upscale", "prezzo": {"per": "or_video", "skus": x.get("pricing_skus") or {}}}
 
 
 def _modello_video(x):
     if x.get("upscale_factor"):
         return _modello_upscale(x)
+    if not x.get("supported_durations") and not x.get("supported_frame_images"):
+        testo = (x.get("id", "") + " " + (x.get("description") or "")).lower()
+        if "edit" in testo or "source video" in testo or "footage" in testo:
+            return _modello_modifica_video(x)
+        return None  # ingressi particolari (es. avatar con audio) che l'app non sa ancora gestire
     par = []
     durate = _durate(x.get("supported_durations"))
     if durate:
@@ -249,38 +265,88 @@ def _modello_video(x):
 
 
 def prezzo_immagine(or_id):
-    """Legge dagli endpoint del modello il costo per token di output (se disponibile)."""
+    """Legge dagli endpoint del modello il costo dell'immagine generata (per token, per immagine o per megapixel)."""
     try:
-        d = _http("GET", f"{BASE}/images/models/{or_id}/endpoints", auth=False, timeout=30)
+        d = _http("GET", f"{BASE}/images/models/{or_id}/endpoints", auth=False, timeout=30, riprova=False)
         d = d.get("data", d) if isinstance(d, dict) else d
         eps = d if isinstance(d, list) else d.get("endpoints", [])
+        righe = []
         for ep in eps:
             pricing = ep.get("pricing") or []
             if isinstance(pricing, dict):
                 pricing = [pricing]
             for p in pricing:
-                if p.get("billable") == "output_image" and p.get("unit") == "token":
+                if p.get("billable") != "output_image" or p.get("cost_usd") in (None, ""):
+                    continue
+                if p.get("unit") == "token":
                     return {"per": "or_img_token", "usd": float(p["cost_usd"])}
+                if p.get("unit") in ("image", "megapixel"):
+                    righe.append({"unit": p["unit"], "usd": float(p["cost_usd"]),
+                                  "cond": " ".join(str(v) for k, v in p.items() if k not in ("cost_usd", "unit", "billable"))})
+            if righe:
+                return {"per": "or_img_righe", "righe": righe}
     except Exception:  # noqa: BLE001
         pass
     return {"per": "sconosciuto"}
 
 
+PREZZI = DATI / "openrouter_prezzi.json"  # prezzi delle immagini di tutto il catalogo (si aggiornano da soli)
+
+
+def prezzi():
+    try:
+        return json.loads(PREZZI.read_text(encoding="utf-8"))
+    except Exception:  # noqa: BLE001
+        return {}
+
+
+def aggiorna_prezzi():
+    """In background: legge i prezzi dei modelli di immagini che non li hanno ancora (o vecchi di una settimana)."""
+    c, noti, cambiato = catalogo(), prezzi(), False
+    for x in c.get("immagini", []):
+        v = noti.get(x["id"])
+        if v and time.time() - v.get("ts", 0) < 7 * 86400:
+            continue
+        p = prezzo_immagine(x["id"])
+        p["ts"] = time.time() if p["per"] != "sconosciuto" else time.time() - 6 * 86400  # riprova domani
+        noti[x["id"]], cambiato = p, True
+        time.sleep(0.2)
+    if cambiato:
+        try:
+            PREZZI.write_text(json.dumps(noti), encoding="utf-8")
+        except OSError:
+            pass
+
+
 def modelli():
+    """Tutti i modelli di immagini e video di OpenRouter, già pronti: i consigliati in cima, poi gli altri per nome."""
     c = catalogo()
     per_id = {x["id"]: ("immagine", x) for x in c.get("immagini", [])}
-    per_id.update({x["id"]: ("video", x) for x in c.get("video", [])})
+    per_id.update({x["id"]: ("video", x) for x in c.get("video", []) if x["id"] not in per_id})
+    noti = prezzi()
     extra = {a["or_id"]: a for a in aggiunti()}
+    altri = sorted((i for i in per_id if i not in PREDEFINITI), key=lambda i: (per_id[i][1].get("name") or i).lower())
     out = []
-    for or_id in PREDEFINITI + [i for i in extra if i not in PREDEFINITI]:
-        if or_id not in per_id:
-            continue
+    for or_id in [i for i in PREDEFINITI if i in per_id] + altri:
         tipo, x = per_id[or_id]
-        m = _modello_immagine(x, extra.get(or_id, {})) if tipo == "immagine" else _modello_video(x)
-        if tipo == "immagine" and m["prezzo"]["per"] == "sconosciuto" and or_id in PREDEFINITI:
-            m["prezzo"] = {"per": "or_img_token", "usd": 0.00012} if "gemini-3-pro-image" in or_id else (
-                {"per": "or_img_token", "usd": 0.00006} if "gemini-3.1-flash-image" in or_id else m["prezzo"])
-        m["aggiunto"] = or_id in extra and or_id not in PREDEFINITI
+        try:
+            m = _modello_immagine(x, extra.get(or_id, {})) if tipo == "immagine" else _modello_video(x)
+        except Exception:  # noqa: BLE001  (un modello con dati strani non deve bloccare la lista)
+            continue
+        if not m:
+            continue
+        if tipo == "immagine" and m["prezzo"].get("per") == "sconosciuto":
+            p = {k: v for k, v in (noti.get(or_id) or {}).items() if k != "ts"}
+            if p.get("per") not in (None, "sconosciuto"):
+                m["prezzo"] = p
+            elif "gemini-3-pro-image" in or_id:
+                m["prezzo"] = {"per": "or_img_token", "usd": 0.00012}
+            elif "gemini-3.1-flash-image" in or_id:
+                m["prezzo"] = {"per": "or_img_token", "usd": 0.00006}
+        if tipo == "immagine" and "upscal" in (or_id + " " + (x.get("name") or "")).lower():
+            m["gruppo"] = "upscale"
+        m["gruppo"] = "consigliati" if or_id in PREDEFINITI else m.get("gruppo") or tipo
+        m["aggiunto"] = False
         out.append(m)
     return out
 
@@ -316,8 +382,21 @@ def rimuovi(mid):
 
 # ---------- costi ----------
 
+MEGAPIXEL = {"512": 0.26, "768": 0.6, "1K": 1.05, "1.5K": 2.4, "2K": 4.2, "4K": 16.8}
+
+
 def stima(m, params):
     p = m.get("prezzo") or {}
+    if p.get("per") == "or_img_righe":
+        res = str(params.get("resolution") or params.get("quality") or "")
+        righe = p.get("righe") or []
+        scelte = [x for x in righe if res and res.lower() in x.get("cond", "").lower()] or righe
+        if not scelte:
+            return None
+        x = min(scelte, key=lambda y: y["usd"]) if len(scelte) > 1 and not res else scelte[0]
+        n = int(params.get("n", 1) or 1)
+        mp = MEGAPIXEL.get(res, 1.05) if x["unit"] == "megapixel" else 1
+        return round(x["usd"] * mp * n, 3)
     if p.get("per") == "or_img_token":
         t = TOKEN_IMMAGINE.get(str(params.get("resolution", "1K")), 1120)
         return round(p["usd"] * t * int(params.get("n", 1) or 1), 3)
@@ -525,10 +604,15 @@ def genera(m, richiesta, params, stato):
         dati_v, tipo_v = base64.b64decode(v["dati"].split(",", 1)[1]), \
             (v["dati"].split(";")[0].split(":", 1)[1] if v["dati"].startswith("data:") else "video/mp4")
         v["url"] = carica_temporaneo(dati_v, tipo_v, v.get("nome"))
-        body = {"model": m["or_id"],
-                "input_references": [{"type": "video_url", "video_url": {"url": v["url"]}}],
-                "upscale_factor": float(params.get("upscale_factor") or 1.5),
-                "creativity": 1 if params.get("modalita") == "Creative" else 0}
+        body = {"model": m["or_id"], "input_references": [{"type": "video_url", "video_url": {"url": v["url"]}}]}
+        if m.get("modifica_video"):
+            if not (richiesta.get("prompt") or "").strip():
+                raise RuntimeError("Scrivi nel prompt come modificare il video.")
+            if params.get("aspect_ratio"):
+                body["aspect_ratio"] = params["aspect_ratio"]
+        else:
+            body["upscale_factor"] = float(params.get("upscale_factor") or 1.5)
+            body["creativity"] = 1 if params.get("modalita") == "Creative" else 0
         if (richiesta.get("prompt") or "").strip():
             body["prompt"] = richiesta["prompt"].strip()
         stato("Invio il video a OpenRouter…")

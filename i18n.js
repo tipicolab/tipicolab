@@ -42,7 +42,9 @@ const EX={
 'Il file è pesante: se OpenRouter lo rifiuta, esportalo più leggero (H.264).':'The file is large: if OpenRouter rejects it, export a lighter one (H.264).',
 // parametri dei modelli
 'Risoluzione':'Resolution','Formato':'Aspect ratio','Quante immagini':'Number of images','Seed (opzionale)':'Seed (optional)','Durata (s)':'Duration (s)',
-'Modalità':'Mode','Ingrandimento':'Upscale factor','Da evitare':'Avoid','Immagini':'Images','Aggiunti da te':'Added by you',
+'Modalità':'Mode','Ingrandimento':'Upscale factor','Da evitare':'Avoid','Immagini':'Images','Aggiunti da te':'Added by you','Consigliati':'Recommended','Upscale e modifica':'Upscale & edit',
+'Video da modificare (obbligatorio)':'Video to edit (required)','Scrivi nel prompt come modificare il video.':'Write in the prompt how to edit the video.',
+'Descrivi la modifica: es. "cambia il colore della giacca in rosso"':'Describe the edit: e.g. "change the jacket colour to red"',
 'Primo frame (opzionale: senza = da testo)':'First frame (optional: without = from text)','Ultimo frame (opzionale)':'Last frame (optional)',
 'Video da upscalare (obbligatorio)':'Video to upscale (required)','Reference (outfit, location, luce…)':'References (outfit, location, lighting…)',
 'Nano Banana Pro · da testo':'Nano Banana Pro · text to image','Nano Banana Pro · con reference':'Nano Banana Pro · with references',

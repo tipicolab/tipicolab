@@ -30,7 +30,7 @@ verrà ricreata (la prima volta dopo ci vuole qualche minuto in più).
 USO
 - Crea un progetto, scegli il modello, carica le reference, scrivi il prompt,
   controlla il costo stimato e premi Genera.
-- "+ Modelli": cerca altri modelli nel catalogo e aggiungili al menu.
+- Nel menu Modello ci sono già tutti i modelli di OpenRouter: Consigliati, Immagini, Video, Upscale e modifica.
 - Dopo ogni generazione viene salvato il COSTO REALE.
 - Le immagini generate restano dentro l'app (cartella privata:
   ~/Library/Application Support/Tipico Lab/Progetti/<progetto>/, con accanto

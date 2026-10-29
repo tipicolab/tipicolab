@@ -938,7 +938,7 @@ def prepara():
     chiave, radice = config()
     if chiave:
         threading.Thread(target=aggiorna_prezzi_mancanti, daemon=True).start()
-    threading.Thread(target=openrouter.catalogo, daemon=True).start()
+    threading.Thread(target=lambda: (openrouter.catalogo(), openrouter.aggiorna_prezzi()), daemon=True).start()
     return chiave, radice
 
 

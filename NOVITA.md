@@ -2,6 +2,12 @@
 
 Ogni versione pubblicata ha qui il suo paragrafo: è il testo che compare nell'avviso di aggiornamento.
 
+## 1.5.0
+- Tutti i modelli di OpenRouter già pronti nel menu Modello, senza doverli aggiungere: Consigliati, Immagini, Video,
+  Upscale e modifica (FLUX Video Upscale, FLUX Video Edit, Runway Aleph…). Si aggiornano da soli quando
+  OpenRouter ne pubblica di nuovi. Il pulsante "+ Modelli" non c'è più.
+- Costo stimato anche per i modelli di immagini che prima mostravano "n.d." (quando OpenRouter pubblica il prezzo).
+
 ## 1.4.7
 - "+ Modelli": senza chiave fal.ai la ricerca mostra solo i modelli OpenRouter. Prima comparivano anche quelli
   di fal.ai: aggiungendoli risultavano "Aggiunto ✓" ma non apparivano nel menu dei modelli (servono la chiave fal).

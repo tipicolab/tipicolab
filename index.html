@@ -273,7 +273,6 @@ dialog::backdrop{background:rgba(0,0,0,.45);backdrop-filter:blur(2px)}
   <button id="nuovo" class="btn-ghost">+ Nuovo progetto</button>
   <div class="switch" id="vistaSwitch" role="tablist" aria-label="Vista"><button data-v="griglia" class="on">Griglia</button><button data-v="canvas">Canvas</button></div>
   <span class="spazio"></span>
-  <button id="apriModelli" class="btn-ghost">+ Modelli</button>
   <button id="cartella" class="btn-ghost">Apri cartella</button>
   <select id="lingua" class="lingua" title="Lingua · Language" aria-label="Lingua"><option value="it">🇮🇹 Italiano</option><option value="en">🇬🇧 English</option></select>
 </header>
@@ -364,10 +363,13 @@ async function init(){
   try{const ultimo=localStorage.getItem('modello');if(ultimo&&st.modelli.some(m=>m.id===ultimo))$('#modello').value=ultimo}catch(e){}
   progetti(st.progetti);disegnaModello();
 }
+/* tutti i modelli disponibili, divisi in gruppi (il server indica il gruppo di ognuno) */
+const GRUPPI_MODELLI=[['Consigliati',m=>m.gruppo==='consigliati'],['Immagini',m=>m.gruppo==='immagine'||(!m.gruppo&&m.tipo==='immagine')],
+  ['Video',m=>m.gruppo==='video'||(!m.gruppo&&m.tipo!=='immagine'&&!m.video_sorgente)],['Upscale e modifica',m=>m.gruppo==='upscale'||(!m.gruppo&&!!m.video_sorgente)]];
+window.GRUPPI_MODELLI=GRUPPI_MODELLI;
 function disegnaSelectModelli(){
   const opt=m=>`<option value="${m.id}">${esc(m.nome)}</option>`;
-  const gruppi=[['Immagini',m=>m.tipo==='immagine'&&!m.aggiunto],['Video',m=>m.tipo!=='immagine'&&!m.aggiunto],
-    ['Aggiunti da te',m=>m.aggiunto]];
+  const gruppi=GRUPPI_MODELLI;
   const prima=$('#modello').value;
   $('#modello').innerHTML=gruppi.map(([nome,f])=>{const l=S.modelli.filter(f);return l.length?`<optgroup label="${nome}">${l.map(opt).join('')}</optgroup>`:''}).join('');
   if(prima&&S.modelli.some(m=>m.id===prima))$('#modello').value=prima}
@@ -382,7 +384,7 @@ function disegnaModello(){
   const m=mod();if(!m)return;try{localStorage.setItem('modello',m.id)}catch(e){}
   $('#boxPrompt').hidden=m.prompt===false;$('#boxVideo').hidden=!m.video_sorgente;
   $('#promptLabel').textContent=m.prompt_opzionale?'Prompt (opzionale)':'Prompt';
-  $('#prompt').placeholder=m.video_sorgente?'Opzionale: es. "mantieni nitidi i dettagli del tessuto e i volti"':
+  $('#prompt').placeholder=m.modifica_video?'Descrivi la modifica: es. "cambia il colore della giacca in rosso"':m.video_sorgente?'Opzionale: es. "mantieni nitidi i dettagli del tessuto e i volti"':
     (m.reference?'Es. la modella di @img1 indossa la giacca di @img2, luce come in @img3…':'Descrivi immagine o movimento…');
   if(m.video_sorgente)$('#videoLabel').textContent=m.video_sorgente.etichetta;
   $('#boxRef').hidden=!m.reference;$('#boxFine').hidden=!m.reference_fine;
@@ -677,7 +679,7 @@ async function cercaModelli(){const q=$('#qModelli').value.trim();if(!q)return;$
       try{const r=await api('/api/aggiungi-modello',{endpoint:b.dataset.add});b.replaceWith(Object.assign(document.createElement('span'),{className:'nota',textContent:'Aggiunto ✓'}));await ricarica();$('#modello').value=r.modello.id;disegnaModello()}
       catch(e){alert(e.message);b.disabled=false;b.textContent='Aggiungi'}})}
   catch(e){$('#risultati').innerHTML=`<div class="voce nota">Errore: ${esc(e.message)}</div>`}}
-$('#apriModelli').onclick=()=>{disegnaAggiunti();$('#dlgModelli').showModal();$('#qModelli').focus()};
+if($('#apriModelli'))$('#apriModelli').onclick=()=>{disegnaAggiunti();$('#dlgModelli').showModal();$('#qModelli').focus()};
 $('#chiudiModelli').onclick=()=>$('#dlgModelli').close();
 $('#btnCerca').onclick=cercaModelli;$('#qModelli').onkeydown=e=>{if(e.key==='Enter')cercaModelli()};
 

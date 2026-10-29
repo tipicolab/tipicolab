@@ -15,6 +15,8 @@ const EX={
 'I download chiederanno ogni volta dove salvare':'Downloads will ask every time where to save','Scarica':'Download','Salva con nome…':'Save as…',
 'Scegliere una cartella funziona solo sul Mac.':'Choosing a folder only works on the Mac.','File non trovato.':'File not found.',
 // aggiornamenti
+'In generazione su OpenRouter…':'Generating on OpenRouter…','In generazione su OpenRouter (via alternativa)…':'Generating on OpenRouter (alternative route)…',
+'Il modello non ha restituito immagini.':'The model returned no images.',
 'Aggiorna e riavvia':'Update and restart','Più tardi':'Later','Inizio…':'Starting…','Scarico l\'aggiornamento…':'Downloading the update…',
 'Preparo la nuova versione…':'Preparing the new version…','Installo…':'Installing…','Riavvio…':'Restarting…',
 'Nessuna versione nuova da installare.':'No new version to install.','Il file scaricato non contiene l\'app.':'The downloaded file doesn\'t contain the app.',

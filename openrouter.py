@@ -71,10 +71,10 @@ def chiave():
 RIPROVE_429 = (4, 8, 15, 25)  # attese (secondi) tra un tentativo e l'altro
 
 
-def _http(method, url, body=None, auth=True, timeout=120, raw=False, stato=None):
+def _http(method, url, body=None, auth=True, timeout=120, raw=False, stato=None, riprova=True):
     """Chiamata a OpenRouter. Se risponde 429 (troppe richieste o credito non verificato in tempo) la richiesta
     è stata rifiutata prima di partire, quindi non costa nulla: riprova da sola qualche volta prima di arrendersi."""
-    for i, attesa in enumerate((*RIPROVE_429, None)):
+    for i, attesa in enumerate((*RIPROVE_429, None) if riprova else (None,)):
         try:
             return _http1(method, url, body, auth, timeout, raw)
         except _Riprova as e:
@@ -450,6 +450,36 @@ ESTENSIONI = {"image/svg+xml": ".svg", "image/svg": ".svg", "image/png": ".png",
               "video/webm": ".webm", "video/quicktime": ".mov"}
 
 
+def _gemini_chat(m, prompt, refs, params, stato):
+    """Immagini Gemini tramite /chat/completions (modalities image), la via classica di OpenRouter per questi modelli."""
+    contenuto = [{"type": "text", "text": prompt}] + [{"type": "image_url", "image_url": r["image_url"]} for r in refs]
+    body = {"model": m["or_id"], "messages": [{"role": "user", "content": contenuto}],
+            "modalities": ["image", "text"], "usage": {"include": True}}
+    cfg = {}
+    if params.get("aspect_ratio"):
+        cfg["aspect_ratio"] = params["aspect_ratio"]
+    if str(params.get("resolution", "")).upper() in ("1K", "2K", "4K"):
+        cfg["image_size"] = str(params["resolution"]).upper()
+    if cfg:
+        body["image_config"] = cfg
+    if params.get("seed") not in (None, ""):
+        body["seed"] = params["seed"]
+    file, costo = [], 0.0
+    for _ in range(max(1, int(params.get("n") or 1))):
+        d = _http("POST", BASE + "/chat/completions", body, timeout=900, stato=stato)
+        msg = ((d.get("choices") or [{}])[0].get("message") or {})
+        for im in msg.get("images") or []:
+            u = (im.get("image_url") or {}).get("url", "")
+            if u.startswith("data:") and "," in u:
+                testa, b64 = u.split(",", 1)
+                file.append((base64.b64decode(b64), ESTENSIONI.get(testa[5:].split(";")[0], ".png")))
+        costo += float((d.get("usage") or {}).get("cost") or 0)
+    if not file:
+        testo = msg.get("content") if isinstance(msg.get("content"), str) else ""
+        raise RuntimeError("Il modello non ha restituito immagini" + (f": {testo[:300]}" if testo else "."))
+    return file, (costo or None), {"via": "chat"}
+
+
 def genera(m, richiesta, params, stato):
     """Restituisce (lista di (bytes, estensione), costo_reale_usd_o_None, info_extra)."""
     if not chiave():
@@ -460,7 +490,18 @@ def genera(m, richiesta, params, stato):
         if refs:
             body["input_references"] = [{"type": "image_url", "image_url": {"url": _img(r["dati"])}} for r in refs]
         stato("In generazione su OpenRouter…")
-        d = _http("POST", BASE + "/images", body, timeout=900, stato=stato)
+        if refs and str(m["or_id"]).startswith("google/"):
+            # Gemini (Nano Banana) con reference: su alcuni account /images risponde sempre 429 "could not verify
+            # available credits". Una richiesta rifiutata non costa nulla, quindi si passa subito alla via "chat".
+            try:
+                d = _http("POST", BASE + "/images", body, timeout=900, riprova=False)
+            except RuntimeError as e:
+                if "429" not in str(e):
+                    raise
+                stato("In generazione su OpenRouter (via alternativa)…")
+                return _gemini_chat(m, richiesta["prompt"], body["input_references"], params, stato)
+        else:
+            d = _http("POST", BASE + "/images", body, timeout=900, stato=stato)
         file = []
         for x in d.get("data", []):
             if not x.get("b64_json"):

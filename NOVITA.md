@@ -2,6 +2,10 @@
 
 Ogni versione pubblicata ha qui il suo paragrafo: è il testo che compare nell'avviso di aggiornamento.
 
+## 1.4.6
+- Nano Banana Pro con reference: se OpenRouter risponde 429 "could not verify available credits", l'app passa
+  subito a una via alternativa di OpenRouter (la stessa usata dai siti che usano Gemini) e genera lo stesso.
+
 ## 1.4.5
 - Reference più leggere: prima di inviarle l'app le riduce a 1536 px di lato (JPEG, o PNG se hanno trasparenza).
   Risolve l'errore 429 "could not verify available credits" di Nano Banana Pro con le foto di reference,

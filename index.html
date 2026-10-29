@@ -253,6 +253,25 @@ dialog::backdrop{background:rgba(0,0,0,.45);backdrop-filter:blur(2px)}
   .card.entra .media>img,.card.entra .media>video,.cvc.entra>img,.cvc.entra>video{transition:none}
 }
 @keyframes phPulsa{50%{opacity:.62}}
+
+/* ---------- scelta del modello con ricerca ---------- */
+.sel-cerca{position:relative;display:block;width:100%}
+.sel-cerca>select{position:absolute!important;inset:0;opacity:0;pointer-events:none;width:100%}
+.sel-cerca>.sc-btn{width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;text-align:left;
+  background:var(--field) var(--chev) no-repeat right 18px center;padding:14px 44px 14px 16px;border-radius:var(--r-md);font-size:15px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+.sel-cerca>.sc-btn:hover{background-color:var(--field-hover)}
+.sc-pop{position:fixed;z-index:200;width:min(440px,calc(100vw - 24px));max-height:min(480px,calc(100vh - 40px));display:flex;flex-direction:column;
+  background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:0 18px 50px rgba(0,0,0,.18);overflow:hidden;font-family:var(--font)}
+.sc-pop input{margin:10px;padding:11px 14px;border-radius:10px;border:1px solid var(--line);background:var(--field);font-size:14.5px;outline:none}
+.sc-pop input:focus{border-color:var(--acc);background:#fff}
+.sc-lista{overflow-y:auto;padding:0 6px 8px}
+.sc-gr{font-size:11.5px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--mute);padding:10px 10px 4px}
+.sc-op{display:block;width:100%;text-align:left;background:transparent;padding:8px 10px;border-radius:8px;font-size:14px;color:var(--ink)}
+.sc-op:hover,.sc-op.att{background:var(--acc-soft)}
+.sc-op.scelto{font-weight:600;color:var(--acc)}
+.nd .sel-cerca>.sc-btn{padding:9px 34px 9px 12px;font-size:13px;background-position:right 12px center;border-radius:10px}
+.sc-vuoto{padding:18px 12px;color:var(--mute);font-size:13.5px;text-align:center}
 </style>
 <link rel="stylesheet" href="/canvas.css">
 </head>
@@ -817,6 +836,52 @@ function canvasMancante(){
   try{localStorage.setItem('vista','griglia')}catch(e){}
   document.querySelectorAll('#vistaSwitch button').forEach(b=>b.onclick=()=>{
     if(b.dataset.v==='canvas')alert('La Canvas non si è caricata.\n\nChiudi la finestra del Terminale di Tipico Lab e riapri "Avvia Tipico Lab.command": il server deve ripartire per usare la versione aggiornata.')})}
+</script>
+<script>
+/* Menu dei modelli con ricerca: il <select> originale resta (nascosto) e guida tutto il resto dell'app;
+   sopra c'è un pulsante che apre un elenco filtrabile scrivendo (nome o fornitore del modello). */
+(()=>{
+const desc=Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype,'value');
+let pop=null;
+function chiudi(){if(pop){pop.remove();pop=null}}
+function etichetta(sel){const o=sel.options[sel.selectedIndex];return o?o.textContent:''}
+function potenzia(sel){if(sel._cerca)return;sel._cerca=true;
+  const w=document.createElement('div');w.className='sel-cerca';sel.parentNode.insertBefore(w,sel);w.appendChild(sel);
+  const b=document.createElement('button');b.type='button';b.className='sc-btn';b.dataset.noi18n='';w.appendChild(b);
+  const agg=()=>{b.textContent=etichetta(sel)||'—'};agg();
+  Object.defineProperty(sel,'value',{get(){return desc.get.call(this)},set(v){desc.set.call(this,v);agg()},configurable:true});
+  sel.addEventListener('change',agg);new MutationObserver(agg).observe(sel,{childList:true,subtree:true});
+  b.addEventListener('pointerdown',e=>e.stopPropagation());
+  b.onclick=e=>{e.stopPropagation();if(pop&&pop._sel===sel){chiudi();return}apri(sel,b)}}
+function apri(sel,b){chiudi();pop=document.createElement('div');pop.className='sc-pop';pop._sel=sel;
+  pop.innerHTML='<input type="search" placeholder="Cerca un modello…" spellcheck="false"><div class="sc-lista"></div>';
+  document.body.appendChild(pop);
+  const r=b.getBoundingClientRect(),h=pop.offsetHeight,W=pop.offsetWidth;
+  let top=r.bottom+6;if(top+h>innerHeight-12)top=Math.max(12,r.top-h-6);
+  pop.style.top=top+'px';pop.style.left=Math.max(12,Math.min(r.left,innerWidth-W-12))+'px';
+  const inp=pop.querySelector('input'),lista=pop.querySelector('.sc-lista');let voci=[],att=0;
+  const disegna=()=>{const q=inp.value.toLowerCase().trim().split(/\s+/).filter(Boolean);let html='';voci=[];
+    for(const g of sel.children){const ops=g.tagName==='OPTGROUP'?[...g.children]:[g];
+      const ok=ops.filter(o=>o.value&&q.every(p=>(o.textContent+' '+o.value).toLowerCase().includes(p)));
+      if(!ok.length)continue;if(g.tagName==='OPTGROUP')html+=`<div class="sc-gr">${g.label}</div>`;
+      for(const o of ok){html+=`<button type="button" class="sc-op${o.value===desc.get.call(sel)?' scelto':''}" data-i="${voci.length}" data-noi18n></button>`;voci.push(o)}}
+    lista.innerHTML=html||'<div class="sc-vuoto">Nessun modello trovato.</div>';
+    lista.querySelectorAll('.sc-op').forEach(x=>x.textContent=voci[+x.dataset.i].textContent);
+    att=Math.max(0,voci.findIndex(o=>o.value===desc.get.call(sel)));if(q.length)att=0;evid(false)};
+  const evid=scorri=>{lista.querySelectorAll('.sc-op').forEach((x,i)=>x.classList.toggle('att',i===att));
+    const x=lista.querySelector('.sc-op.att');if(x&&scorri!==false)x.scrollIntoView({block:'nearest'});else if(x)x.scrollIntoView({block:'center'})};
+  const scegli=i=>{const o=voci[i];if(!o)return;chiudi();if(o.value!==desc.get.call(sel)){sel.value=o.value;sel.dispatchEvent(new Event('change',{bubbles:true}))}};
+  lista.onclick=e=>{const x=e.target.closest('.sc-op');if(x)scegli(+x.dataset.i)};
+  inp.oninput=disegna;
+  inp.onkeydown=e=>{if(e.key==='ArrowDown'){e.preventDefault();att=Math.min(voci.length-1,att+1);evid()}
+    else if(e.key==='ArrowUp'){e.preventDefault();att=Math.max(0,att-1);evid()}
+    else if(e.key==='Enter'){e.preventDefault();scegli(att)}else if(e.key==='Escape'){e.preventDefault();e.stopPropagation();chiudi();b.focus()}};
+  disegna();inp.focus()}
+addEventListener('pointerdown',e=>{if(pop&&!pop.contains(e.target))chiudi()},true);
+addEventListener('resize',chiudi);addEventListener('wheel',e=>{if(pop&&!pop.contains(e.target))chiudi()},{passive:true,capture:true});
+const cerca=()=>document.querySelectorAll('#modello, select.nd-modello').forEach(potenzia);
+new MutationObserver(cerca).observe(document.body,{childList:true,subtree:true});cerca();
+})();
 </script>
 <script src="/canvas.js" onerror="canvasMancante()"></script>
 </body>

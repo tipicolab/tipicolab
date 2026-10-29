@@ -2,6 +2,10 @@
 
 Ogni versione pubblicata ha qui il suo paragrafo: è il testo che compare nell'avviso di aggiornamento.
 
+## 1.5.1
+- Ricerca nel menu dei modelli (Griglia e Canvas): clicca il menu e scrivi, ad esempio "flux", "veo" o "seedream".
+  Frecce ↑↓ per spostarti, Invio per scegliere, Esc per chiudere.
+
 ## 1.5.0
 - Tutti i modelli di OpenRouter già pronti nel menu Modello, senza doverli aggiungere: Consigliati, Immagini, Video,
   Upscale e modifica (FLUX Video Upscale, FLUX Video Edit, Runway Aleph…). Si aggiornano da soli quando

@@ -214,11 +214,14 @@ def cerca_modelli(q):
         risultati += openrouter.cerca(q)
     except Exception:  # noqa: BLE001
         pass
-    try:
-        risultati += cerca_modelli_fal(q)
-    except Exception:  # noqa: BLE001
-        if not risultati:
-            raise
+    # I modelli fal.ai si vedono (e si possono usare) solo con la chiave fal: senza, aggiungerli li faceva
+    # "sparire" (finivano nella lista ma il menu dei modelli mostra solo quelli dei fornitori di cui hai la chiave).
+    if config()[0]:
+        try:
+            risultati += cerca_modelli_fal(q)
+        except Exception:  # noqa: BLE001
+            if not risultati:
+                raise
     return risultati
 
 

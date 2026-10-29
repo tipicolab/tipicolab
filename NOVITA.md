@@ -2,6 +2,11 @@
 
 Ogni versione pubblicata ha qui il suo paragrafo: è il testo che compare nell'avviso di aggiornamento.
 
+## 1.4.7
+- "+ Modelli": senza chiave fal.ai la ricerca mostra solo i modelli OpenRouter. Prima comparivano anche quelli
+  di fal.ai: aggiungendoli risultavano "Aggiunto ✓" ma non apparivano nel menu dei modelli (servono la chiave fal).
+  Ogni risultato ora mostra anche il fornitore.
+
 ## 1.4.6
 - Nano Banana Pro con reference: se OpenRouter risponde 429 "could not verify available credits", l'app passa
   subito a una via alternativa di OpenRouter (la stessa usata dai siti che usano Gemini) e genera lo stesso.

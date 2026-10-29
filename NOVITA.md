@@ -2,6 +2,10 @@
 
 Ogni versione pubblicata ha qui il suo paragrafo: è il testo che compare nell'avviso di aggiornamento.
 
+## 1.4.3
+- Nuovo logo Tipico Lab in alto a sinistra.
+- Con la finestra stretta la barra in alto si compatta invece di uscire dallo schermo.
+
 ## 1.4.2
 - Nuova icona: la T grigia su fondo nero (anche nella barra dei menu in alto).
 

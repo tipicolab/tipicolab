@@ -2,6 +2,9 @@
 
 Ogni versione pubblicata ha qui il suo paragrafo: è il testo che compare nell'avviso di aggiornamento.
 
+## 1.4.2
+- Nuova icona: la T grigia su fondo nero (anche nella barra dei menu in alto).
+
 ## 1.4.1
 - "Salva con nome…": anche con una cartella di salvataggio impostata puoi salvare una copia dove vuoi.
   L'icona Scarica ora chiede: "Salva in <cartella>" oppure "Salva con nome…" (si apre la finestra del Mac).

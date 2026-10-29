@@ -114,7 +114,8 @@ const PAT=[
 [/^(\d+) file · spesa totale (.+)$/,(m,n,c)=>`${n} file${n==='1'?'':'s'} · total spent ${c}`],
 [/^Reference \(opzionali, max (\d+)\)$/,(m,n)=>`References (optional, max ${n})`],
 [/^Reference di stile \(obbligatoria, max (\d+)\)$/,(m,n)=>`Style reference (required, max ${n})`],
-[/^In coda…(.*)$/,(m,r)=>'Queued…'+tr2(r)],[/^Genero…(.*)$/,(m,r)=>'Generating…'+tr2(r)],[/^Quasi pronto…(.*)$/,(m,r)=>'Almost done…'+tr2(r)],
+[/^In coda…(.*)$/,(m,r)=>'Queued…'+tr2(r)],[/^OpenRouter è occupato: riprovo tra (\d+) s \((\d+)\/(\d+)\)…$/,(m,s,k,n)=>`OpenRouter is busy: retrying in ${s} s (${k}/${n})…`],
+[/^Genero…(.*)$/,(m,r)=>'Generating…'+tr2(r)],[/^Quasi pronto…(.*)$/,(m,r)=>'Almost done…'+tr2(r)],
 [/^Errore: ([\s\S]*)$/,(m,r)=>'Error: '+T(r)],
 [/^Inserisci (@\w+) nel prompt$/,(m,t)=>`Insert ${t} into the prompt`],
 [/^Nessuna reference con il tag (.+): aggiungila o correggi il nome\.$/,(m,t)=>`No reference with the tag ${t}: add it or fix the name.`],
@@ -132,7 +133,8 @@ const PAT=[
 [/^(.+) · immagine$/,(m,a)=>a+' · image'],
 [/^Modello sconosciuto: (.*)$/,(m,x)=>'Unknown model: '+x],[/^Tipo di file non supportato: (.*)$/,(m,x)=>'Unsupported file type: '+x],
 [/^Generazione fallita: ([\s\S]*)$/,(m,x)=>'Generation failed: '+T(x)],[/^OpenRouter non ha restituito immagini: ([\s\S]*)$/,(m,x)=>'OpenRouter returned no images: '+x],
-[/^OpenRouter ha risposto (\d+): ([\s\S]*)$/,(m,c,x)=>`OpenRouter replied ${c}: `+x.replace('credito OpenRouter esaurito o limite della chiave raggiunto.','OpenRouter credit used up or key limit reached.')],
+[/^OpenRouter ha risposto (\d+): ([\s\S]*)$/,(m,c,x)=>`OpenRouter replied ${c}: `+x.replace('credito OpenRouter esaurito o limite della chiave raggiunto.','OpenRouter credit used up or key limit reached.')
+  .replace(' — Di solito è un intoppo temporaneo di OpenRouter: riprova tra qualche minuto. Se continua, controlla il credito su openrouter.ai/settings/credits.',' — This is usually a temporary OpenRouter hiccup: try again in a few minutes. If it keeps happening, check your credit at openrouter.ai/settings/credits.')],
 [/^fal ha risposto (\d+): ([\s\S]*)$/,(m,c,x)=>`fal replied ${c}: ${x}`],
 [/^Non riesco a caricare il video online \(([\s\S]*)\)$/,(m,x)=>`I couldn't upload the video online (${x})`],
 // Canvas

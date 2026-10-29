@@ -2,6 +2,10 @@
 
 Ogni versione pubblicata ha qui il suo paragrafo: è il testo che compare nell'avviso di aggiornamento.
 
+## 1.4.4
+- Errore 429 di OpenRouter ("could not verify available credits… Retry shortly"): ora l'app riprova da sola
+  fino a 5 volte nel giro di circa un minuto, prima di mostrare l'errore. I tentativi rifiutati non costano nulla.
+
 ## 1.4.3
 - Nuovo logo Tipico Lab in alto a sinistra.
 - Con la finestra stretta la barra in alto si compatta invece di uscire dallo schermo.

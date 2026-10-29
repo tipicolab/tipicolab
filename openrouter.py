@@ -68,7 +68,32 @@ def chiave():
     return "" if k == SEGNAPOSTO else k.strip()
 
 
-def _http(method, url, body=None, auth=True, timeout=120, raw=False):
+RIPROVE_429 = (4, 8, 15, 25)  # attese (secondi) tra un tentativo e l'altro
+
+
+def _http(method, url, body=None, auth=True, timeout=120, raw=False, stato=None):
+    """Chiamata a OpenRouter. Se risponde 429 (troppe richieste o credito non verificato in tempo) la richiesta
+    è stata rifiutata prima di partire, quindi non costa nulla: riprova da sola qualche volta prima di arrendersi."""
+    for i, attesa in enumerate((*RIPROVE_429, None)):
+        try:
+            return _http1(method, url, body, auth, timeout, raw)
+        except _Riprova as e:
+            if attesa is None:
+                raise RuntimeError(e.messaggio + " — Di solito è un intoppo temporaneo di OpenRouter: riprova tra qualche "
+                                   "minuto. Se continua, controlla il credito su openrouter.ai/settings/credits.") from None
+            attesa = max(attesa, min(e.retry_after or 0, 60))
+            if stato:
+                stato(f"OpenRouter è occupato: riprovo tra {int(attesa)} s ({i + 2}/{len(RIPROVE_429) + 1})…")
+            time.sleep(attesa)
+
+
+class _Riprova(Exception):
+    def __init__(self, messaggio, retry_after):
+        super().__init__(messaggio)
+        self.messaggio, self.retry_after = messaggio, retry_after
+
+
+def _http1(method, url, body=None, auth=True, timeout=120, raw=False):
     headers = {"Accept": "application/json", "HTTP-Referer": "http://127.0.0.1", "X-Title": "Tipico Lab"}
     if auth:
         headers["Authorization"] = "Bearer " + chiave()
@@ -89,6 +114,12 @@ def _http(method, url, body=None, auth=True, timeout=120, raw=False):
             pass
         if e.code == 402:
             testo = "credito OpenRouter esaurito o limite della chiave raggiunto. " + testo
+        if e.code == 429:
+            try:
+                ra = float(e.headers.get("Retry-After") or 0)
+            except (TypeError, ValueError):
+                ra = 0
+            raise _Riprova(f"OpenRouter ha risposto 429: {testo[:500]}", ra) from None
         raise RuntimeError(f"OpenRouter ha risposto {e.code}: {testo[:500]}") from None
     return b if raw else json.loads(b or b"{}")
 
@@ -408,7 +439,7 @@ def genera(m, richiesta, params, stato):
         if refs:
             body["input_references"] = [{"type": "image_url", "image_url": {"url": _img(r["dati"])}} for r in refs]
         stato("In generazione su OpenRouter…")
-        d = _http("POST", BASE + "/images", body, timeout=900)
+        d = _http("POST", BASE + "/images", body, timeout=900, stato=stato)
         file = []
         for x in d.get("data", []):
             if not x.get("b64_json"):
@@ -453,7 +484,7 @@ def genera(m, richiesta, params, stato):
     if frames and not m.get("video_sorgente"):
         body["frame_images"] = frames
     stato("Invio a OpenRouter…")
-    sub = _http("POST", BASE + "/videos", body, timeout=300)
+    sub = _http("POST", BASE + "/videos", body, timeout=300, stato=stato)
     url = sub.get("polling_url") or f'{BASE}/videos/{sub["id"]}'
     inizio = time.time()
     while True:
